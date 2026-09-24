@@ -10,6 +10,16 @@
 5. `./main.class`
 
 ### Список реализованного (Пункт будет здесь, до написания первой рабочей версии)
-- [x] Пакет `Storage` содержит три класса: [`Exercise`](src/main/java/storage/Exercise.java), [`Submission`](src/main/java/storage/Submission.java) и [`Team`](src/main/java/storage/Team.java) 
+- [x] Пакет `Storage` содержит четыре класса: [`Exercise`](src/main/java/storage/Exercise.java), [`Submission`](src/main/java/storage/Submission.java), [`Team`](src/main/java/storage/Team.java) и [`Storage`](src/main/java/storage/Storage.java)
 (подробнее в комментариях к коду).
-- [x] 
+- [x] Изменена архитектура и подход к работе с кодом: теперь есть ветка `develop` - это пред-main ветка, для создания
+общего кода и последующего вливания его в main. Теперь работа с ветками будет происходить так:
+1. `git checkout develop -> git pull origin develop -> git checkout -b anton/refactor-router`
+Что это значит: первым делом надо подтянуть изменения с **пред-main** ветки, далее создать новую ветку, для конкретной задачи!
+**ПОСЛЕ MERGE РЕКВЕСТА ВЕТКА, СОЗДАННАЯ ПОД ЗАДАЧУ УДАЛИТСЯ С GITHUB АВТОМАТИЧЕСКИ**
+2. Написание кода  и пуш на временную ветку, созданную под конкретную задачу.
+3. Пул-реквест на гитхаб в порядке: `base: develop <- compare: tmpBranch`
+4. После слияния веток, гитхаб автоматически удаляет временную ветку
+5. Удаление ветки локально с компьютера: `git checkout develop -> git pull origin develop -> git branch -d anton/refactor-router`
+
+- [ ] Тесты для пакета storage

@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 // Класс представляет одну запись типа Team с полями список фамилий и ID
-class Team {
+public class Team {
     // Поля класса
     private int id;
-    private List<String> surnames;
+    private final List<String> surnames;
     private static int nextId = 1;
 
-    Team(List<String> surnames) throws IllegalArgumentException {
+    public Team(List<String> surnames) throws IllegalArgumentException {
         // Проверка, что массив имеет допустимый размер
        if (surnames == null || surnames.size() < 1 || surnames.size() > 3) {
            throw new IllegalArgumentException("Недопустимый размер массива.");
