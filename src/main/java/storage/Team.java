@@ -6,7 +6,7 @@ import java.util.List;
 // Класс представляет одну запись типа Team с полями список фамилий и ID
 public class Team {
     // Поля класса
-    private int id;
+    private final int id;
     private final List<String> surnames;
     private static int nextId = 1;
 

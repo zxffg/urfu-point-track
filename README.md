@@ -10,7 +10,7 @@
 5. `./main.class`
 
 ### Список реализованного (Пункт будет здесь, до написания первой рабочей версии)
-- [x] Пакет `Storage` содержит четыре класса: [`Exercise`](src/main/java/storage/Exercise.java), [`Submission`](src/main/java/storage/Submission.java), [`Team`](src/main/java/storage/Team.java) и [`Storage`](src/main/java/storage/Storage.java)
+- [x] Пакет `StorageTest` содержит четыре класса: [`ExerciseTest`](src/main/java/storage/Exercise.java), [`SubmissionTest`](src/main/java/storage/Submission.java), [`Team`](src/main/java/storage/Team.java) и [`StorageTest`](src/main/java/storage/Storage.java)
 (подробнее в комментариях к коду).
 - [x] Изменена архитектура и подход к работе с кодом: теперь есть ветка `develop` - это пред-main ветка, для создания
 общего кода и последующего вливания его в main. Теперь работа с ветками будет происходить так:

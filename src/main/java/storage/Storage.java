@@ -39,6 +39,14 @@ public class Storage {
 
     // Метод поиска ИЛИ создания новой задачи + возвращает ее.
     public Exercise findOrCreateEx(String name, LocalDate deadline) {
+        // Проверка, что name и deadline не null
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Поле 'имя' не может быть пустым.");
+        }
+        if (deadline == null) {
+            throw new IllegalArgumentException("Дедлайн не может быть пустым.");
+        }
+
         for (Exercise ex : exercises) {
             if (ex.getName().equalsIgnoreCase(name)) {
                 return ex;
