@@ -1,12 +1,12 @@
 // точка входа, собирает всё вместе
 
-import console.ConsoleRunner;
-import dialog.DialogEngine;
+import console.ConsoleHandler;
+import storage.Storage;
 
 public class Main {
     public static void main(String[] args) {
-        DialogEngine dialogEngine = new DialogEngine();
-        ConsoleRunner consoleRunner = new ConsoleRunner(dialogEngine);
+        Storage storage = new Storage();
+        ConsoleHandler consoleRunner = new ConsoleHandler(storage);
         consoleRunner.run();
     }
 }
