@@ -56,5 +56,4 @@ public class Storage {
         exercises.add(newExercise);
         return newExercise;
     }
-
 }
