@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /*
-* Класс для хранения объектов типа Submission.
-* По совету одного чувака, решено написать не статический класс, а "обычный объект".
-*/
+ * Класс для хранения объектов типа Submission.
+ * По совету одного чувака, решено написать не статический класс, а "обычный объект".
+ */
 public class Storage {
     // Поле
     private final List<Submission> submissionsList;
@@ -56,5 +56,4 @@ public class Storage {
         exercises.add(newExercise);
         return newExercise;
     }
-
 }

@@ -2,12 +2,8 @@
 
 package console;
 
-import storage.Exercise;
-import storage.Storage;
-import storage.Submission;
-import storage.Team;
+import storage.*;
 
-import java.security.DrbgParameters;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -18,11 +14,14 @@ import java.util.Scanner;
 public class ConsoleHandler {
     // Поля
     private final Storage storage;
+    // Интерфейс связанный с SheetsExporter
+    private final ResultExporter exporter;
     private final Scanner scanner;
 
     // Конструктор
-    public ConsoleHandler(Storage storage) {
+    public ConsoleHandler(Storage storage, ResultExporter exporter) {
         this.storage = storage;
+        this.exporter = exporter;
         this.scanner = new Scanner(System.in);
     }
 
@@ -116,6 +115,7 @@ public class ConsoleHandler {
         Submission newSubmission = Submission.create(team, exercise, score);
 
         storage.add(newSubmission);
+        exporter.export(newSubmission);
         System.out.println("Добавлена запись: " + newSubmission);
     }
 }

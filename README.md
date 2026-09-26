@@ -1,25 +1,37 @@
-## Point track
+# Point Track
 Консольное Java-приложение для ведения академической успеваемости потока по предмету ООП.
-Проект создан в рамках учебного задания. Предназначен для учета количества сданных задач и просмотра набранных баллов.
+Позволяет вносить результаты сдачи задач (команда, задание, баллы), хранить их локально и автоматически отправлять в Google Sheets.
 
-### Сборка
-1. Проверьте, что у вас JDK26
-2. `git clone https://github.com/zxffg/urfu-point-track`
-3. `mvn compile` или используйте IDE IntelliJ
-4. `javac Main.main` // Пока что проект не предназначен для запуска. Пока что описаны только базовые сущности.
-5. `./main.class`
+## Возможности
+- Внесение результатов через консольное меню
+- Валидация ввода (размер команды, баллы, даты)
+- Поиск или создание задания по имени (без дублей)
+- Просмотр всех внесённых записей
+- Автоматическая синхронизация с Google Sheets через Service Account
 
-### Список реализованного (Пункт будет здесь, до написания первой рабочей версии)
-- [x] Пакет `StorageTest` содержит четыре класса: [`ExerciseTest`](src/main/java/storage/Exercise.java), [`SubmissionTest`](src/main/java/storage/Submission.java), [`Team`](src/main/java/storage/Team.java) и [`StorageTest`](src/main/java/storage/Storage.java)
-(подробнее в комментариях к коду).
-- [x] Изменена архитектура и подход к работе с кодом: теперь есть ветка `develop` - это пред-main ветка, для создания
-общего кода и последующего вливания его в main. Теперь работа с ветками будет происходить так:
-1. `git checkout develop -> git pull origin develop -> git checkout -b anton/refactor-router`
-Что это значит: первым делом надо подтянуть изменения с **пред-main** ветки, далее создать новую ветку, для конкретной задачи!
-**ПОСЛЕ MERGE РЕКВЕСТА ВЕТКА, СОЗДАННАЯ ПОД ЗАДАЧУ УДАЛИТСЯ С GITHUB АВТОМАТИЧЕСКИ**
-2. Написание кода  и пуш на временную ветку, созданную под конкретную задачу.
-3. Пул-реквест на гитхаб в порядке: `base: develop <- compare: tmpBranch`
-4. После слияния веток, гитхаб автоматически удаляет временную ветку
-5. Удаление ветки локально с компьютера: `git checkout develop -> git pull origin develop -> git branch -d anton/refactor-router`
+## Быстрый старт
 
-- [ ] Тесты для пакета storage
+```bash
+git clone https://github.com/zxffg/urfu-point-track
+cd urfu-point-track
+mvn clean install
+```
+
+Настройка Google Sheets API и переменных окружения описана в [DEVELOPER.md](DEVELOPER.md).
+
+## Структура проекта
+
+Пакет `storage` содержит основные сущности и логику:
+
+- [`Team`](src/main/java/storage/Team.java) команда из 1 до 3 участников
+- [`Exercise`](src/main/java/storage/Exercise.java) учебное задание
+- [`Submission`](src/main/java/storage/Submission.java) запись о сдаче задания командой
+- [`Storage`](src/main/java/storage/Storage.java) хранилище записей и заданий
+- `ConsoleHandler` консольное меню и ввод данных
+- `SheetsExporter` отправка записей в Google Sheets
+
+Подробности по каждому классу в комментариях к коду.
+
+## Статус
+
+Проект в разработке. Актуальный список готового находится в [DEVELOPER.md](DEVELOPER.md).

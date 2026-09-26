@@ -41,5 +41,5 @@ build/
 ### Mac OS ###
 .DS_Store
 
-### пароли гугл апи ###
-credentials.json
+### Google API ###
+src/main/resources/credentials.json
