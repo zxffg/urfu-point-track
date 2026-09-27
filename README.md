@@ -27,8 +27,10 @@ mvn clean install
 - [`Exercise`](src/main/java/storage/Exercise.java) учебное задание
 - [`Submission`](src/main/java/storage/Submission.java) запись о сдаче задания командой
 - [`Storage`](src/main/java/storage/Storage.java) хранилище записей и заданий
-- `ConsoleHandler` консольное меню и ввод данных
-- `SheetsExporter` отправка записей в Google Sheets
+- [`ConsoleHandler`](src/main/java/console/ConsoleHandler.java) консольное меню и ввод данных
+- [`SheetsExporter`](src/main/java/storage/SheetsExporter.java) отправка записей в Google Sheets
+
+Тесты (JUnit 5) лежат в src/test/java и покрывают Team, Exercise, Submission, Storage и ConsoleHandler.
 
 Подробности по каждому классу в комментариях к коду.
 
