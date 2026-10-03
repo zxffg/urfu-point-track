@@ -1,6 +1,5 @@
 package storage;
 
-//Класс рекорд с уже созданными геттерами.
 public record Submission(int id, Team team, Exercise exercise, double score) {
 
     // Генератор ID

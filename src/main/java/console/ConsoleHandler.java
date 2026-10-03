@@ -9,10 +9,12 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 
+// Класс ConsoleHandler принимает ввод пользователя и создает запись
+// в таблице.
 public class ConsoleHandler {
-    // Поля
     private final Storage storage;
     // Интерфейс связанный с SheetsExporter
     private final ResultExporter exporter;
@@ -21,7 +23,6 @@ public class ConsoleHandler {
     // Для валидации score
     private static final double MAX_SCORE = 2.0;
 
-    // Конструктор
     public ConsoleHandler(Storage storage, ResultExporter exporter) {
         this.storage = storage;
         this.exporter = exporter;
@@ -33,10 +34,17 @@ public class ConsoleHandler {
         while (true) {
             printMenu();
             String choice = scanner.nextLine();
-            switch (choice) {
-                case "1" -> addSubmission();
-                case "2" -> showAll();
-                case "0" -> { return; }
+            Optional<MenuOption> selected = MenuOption.fromCode(choice);
+
+            if (selected.isEmpty()) {
+                System.out.println("Неизвестная команда.");
+                continue;
+            }
+
+            switch (selected.get()) {
+                case ADD_SUBMISSION -> addSubmission();
+                case SHOW_ALL -> showAll();
+                case EXIT -> { return; }
                 default -> System.out.println("Неизвестная команда.");
             }
         }
@@ -56,9 +64,9 @@ public class ConsoleHandler {
 
     // Меню
     private void printMenu() {
-        System.out.println("1 - Добавить решение.");
-        System.out.println("2 - Показать все решения.");
-        System.out.println("0 - Выйти.");
+        for (MenuOption option : MenuOption.values()) {
+            System.out.println(option.getCode() + " - " + option.getLabel());
+        }
     }
 
     // Метод добавления Submission

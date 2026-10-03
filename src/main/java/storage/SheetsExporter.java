@@ -16,11 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SheetsExporter implements ResultExporter {
-    // Поля
     private final Sheets service;
     private final String spreadsheetId;
 
-    // Конструктор
     public SheetsExporter(String credentialsPath, String spreadsheetId) throws IOException, GeneralSecurityException {
         this.spreadsheetId = spreadsheetId;
         GoogleCredentials credentials = GoogleCredentials
