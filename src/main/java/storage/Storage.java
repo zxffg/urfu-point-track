@@ -11,11 +11,9 @@ import java.util.NoSuchElementException;
  * По совету одного чувака, решено написать не статический класс, а "обычный объект".
  */
 public class Storage {
-    // Поле
     private final List<Submission> submissionsList;
     private final List<Exercise> exercises = new ArrayList<>();
 
-    // Конструктор
     public Storage() {
         this.submissionsList = new ArrayList<>();
     }

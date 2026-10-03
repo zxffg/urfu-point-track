@@ -6,12 +6,9 @@ import java.util.Date;
 
 // Класс задачи
 public class Exercise {
-    // Поля
     private final String name;
     private final LocalDate deadline;
-    // Еще можно добавить поле maxscore? Хотя везде максимум 2 балла
 
-    // Конструктор
     // Еще: решено было добавить валидацию и сюда:
     Exercise(String name, LocalDate deadline) {
         if (name == null || name.isBlank()) {
