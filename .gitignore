@@ -40,3 +40,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Google API ###
+src/main/resources/credentials.json
