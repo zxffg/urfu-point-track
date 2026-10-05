@@ -5,9 +5,10 @@ package console;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import storage.ResultExporter;
+import sheets.ResultExporter;
 import storage.Storage;
-import storage.Submission;
+import submission.Submission;
+import submission.SubmissionService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,20 +19,19 @@ public class ConsoleHandlerTest {
 
     //SUT переменные
     private Storage storage;
-    private ConsoleHandler handler; // объявлено, но не факт что присвоено
+    private SubmissionService service;
 
     @BeforeEach
-        // <- если этой аннотации нет, метод ниже не выполнится
     void setUp() {
         storage = new Storage();
         ResultExporter fakeExporter = new FakeExporter();
-        handler = new ConsoleHandler(storage, fakeExporter); // <- если этой строки нет
+        this.service = new SubmissionService(storage, fakeExporter);
     }
 
     // 1. Валидное создание
     @Test
     void validCreateSubmission() {
-        Submission result = handler.createSubmission(
+        Submission result = service.createSubmission(
                 List.of("Иванов"), "ООП", LocalDate.of(2026, 9, 24), 2.0);
 
         assertEquals(1, storage.getAll().size());
@@ -41,9 +41,9 @@ public class ConsoleHandlerTest {
     // 2. Проверка, что переиспользуется существующая задача
     @Test
     void reusesExistingExerciseAcrossSubmissions() {
-        Submission first = handler.createSubmission(
+        Submission first = service.createSubmission(
                 List.of("Иванов"), "ООП", LocalDate.of(2026, 9, 24), 2.0);
-        Submission second = handler.createSubmission(
+        Submission second = service.createSubmission(
                 List.of("Петров"), "ООП", LocalDate.of(2026, 9, 24), 1.5);
 
         assertSame(first.exercise(), second.exercise());
@@ -53,7 +53,7 @@ public class ConsoleHandlerTest {
     @Test
     void throwsWhenTooManySurnames() {
         assertThrows(IllegalArgumentException.class, () -> {
-            handler.createSubmission(
+            service.createSubmission(
                     List.of("A", "B", "C", "D"), "ООП", LocalDate.of(2026, 9, 24), 2.0);
         });
     }
@@ -62,9 +62,9 @@ public class ConsoleHandlerTest {
     @Test
     void callsExporterOnEverySubmission() {
         FakeExporter fakeExporter = new FakeExporter();
-        ConsoleHandler handler = new ConsoleHandler(storage, fakeExporter);
+        SubmissionService service = new SubmissionService(storage, fakeExporter);
 
-        Submission result = handler.createSubmission(
+        Submission result = service.createSubmission(
                 List.of("Иванов"), "ООП", LocalDate.of(2026, 9, 24), 2.0);
 
         assertEquals(1, fakeExporter.getExported().size());

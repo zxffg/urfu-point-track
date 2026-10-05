@@ -2,8 +2,8 @@
 
 package console;
 
-import storage.ResultExporter;
-import storage.Submission;
+import sheets.ResultExporter;
+import submission.Submission;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,6 @@
 // Подключение апи и форматирование вода в методе export()
 
-package storage;
+package sheets;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
@@ -8,6 +8,7 @@ import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
+import submission.Submission;
 
 import java.io.FileInputStream;
 import java.io.IOException;

@@ -1,9 +1,10 @@
 // точка входа, собирает всё вместе
 
 import console.ConsoleHandler;
-import storage.ResultExporter;
-import storage.SheetsExporter;
+import sheets.ResultExporter;
+import sheets.SheetsExporter;
 import storage.Storage;
+import submission.SubmissionService;
 
 public static void main(String[] args) throws Exception {
     String credentialsPath = System.getenv("SHEETS_CREDENTIALS_PATH");
@@ -16,6 +17,7 @@ public static void main(String[] args) throws Exception {
 
     Storage storage = new Storage();
     ResultExporter exporter = new SheetsExporter(credentialsPath, spreadsheetId);
-    ConsoleHandler handler = new ConsoleHandler(storage, exporter);
+    SubmissionService service = new SubmissionService(storage, exporter);
+    ConsoleHandler handler = new ConsoleHandler(service);
     handler.run();
 }
