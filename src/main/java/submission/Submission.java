@@ -1,4 +1,7 @@
-package storage;
+package submission;
+
+import storage.Exercise;
+import storage.Team;
 
 public record Submission(int id, Team team, Exercise exercise, double score) {
 

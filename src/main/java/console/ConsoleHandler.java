@@ -3,6 +3,8 @@
 package console;
 
 import storage.*;
+import submission.Submission;
+import submission.SubmissionService;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -15,17 +17,14 @@ import java.util.Scanner;
 // Класс ConsoleHandler принимает ввод пользователя и создает запись
 // в таблице.
 public class ConsoleHandler {
-    private final Storage storage;
-    // Интерфейс связанный с SheetsExporter
-    private final ResultExporter exporter;
+    private final SubmissionService service;
     private final Scanner scanner;
 
     // Для валидации score
     private static final double MAX_SCORE = 2.0;
 
-    public ConsoleHandler(Storage storage, ResultExporter exporter) {
-        this.storage = storage;
-        this.exporter = exporter;
+    public ConsoleHandler(SubmissionService service) {
+        this.service = service;
         this.scanner = new Scanner(System.in);
     }
 
@@ -50,18 +49,6 @@ public class ConsoleHandler {
         }
     }
 
-    // Использует getAll() из Storage.java
-    private void showAll() {
-        List<Submission> submissions = storage.getAll();
-        if (submissions.isEmpty()) {
-            System.out.println("Нет ни одной записи.");
-        }
-
-        for (Submission sub : submissions) {
-            System.out.println(sub);
-        }
-    }
-
     // Меню
     private void printMenu() {
         for (MenuOption option : MenuOption.values()) {
@@ -69,24 +56,7 @@ public class ConsoleHandler {
         }
     }
 
-    // Метод добавления Submission
-    // Фамилии -> Задания -> Баллы
-    /* ! Разделение логики: так как в одном методе смешаны и scanner.nextLine() и System.out.println()
-    * это не позволяет написать юнит тесты под эту функцию. Сейчас тут два метода createSubmission() и addSubmission()
-    * второй запрашивает данные, а первый лишь получает их в виде аргумента функции */
-    public Submission createSubmission(List<String> surnames, String exerciseName, LocalDate deadline, double score) {
-        // ! Команда -> проверка "существует ли такое задание?" -> создание решения.
-        Team team = new Team(surnames);
-        Exercise exercise = storage.findOrCreateEx(exerciseName, deadline);
-        Submission newSubmission = Submission.create(team, exercise, score);
-
-        // Возврат из функции
-        storage.add(newSubmission);
-        exporter.export(newSubmission);
-        return newSubmission;
-    }
-
-    // ! Получение данных для метода createSubmission()
+    // Получение данных для метода createSubmission()
     private void addSubmission() {
         System.out.println("Введите фамилии (до 3, для завершения ввода раньше — /q):");
 
@@ -135,10 +105,26 @@ public class ConsoleHandler {
 
         // Создание Submission + добавление в Storage и SheetsAPI
         try {
-            Submission returnedSubmission = createSubmission(surnames, exerciseName, deadline, score);
+            Submission returnedSubmission = service.createSubmission(surnames, exerciseName, deadline, score);
             System.out.println("Добавлена запись: " + returnedSubmission);
         } catch (IllegalArgumentException e) {
             System.out.println("Ошибка создания записи: " + e.getMessage());
+        }
+    }
+
+    private void showAll() {
+        List<Submission> submissions = service.getAllSubmissions();
+        if (submissions.isEmpty()) {
+            System.out.println("Нет ни одной записи.");
+        }
+
+        for (Submission sub : submissions) {
+            // красивый и понятный вывод
+            List<String> teamName = sub.team().getSurnames();
+            String exerciseName = sub.exercise().getName();
+
+            System.out.printf("ID: %d | Команда: %s | Задание: %s | Баллы: %.1f%n",
+                    sub.id(), teamName, exerciseName, sub.score());
         }
     }
 }
