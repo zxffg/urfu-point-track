@@ -6,12 +6,12 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProgressServiceTest {
-    private final ProgressRepository repository = new ProgressRepository() {
-        public List<List<Object>> readProgress() {
-            return List.of(List.of("Иванов", "42"), List.of("Петров", "30"));
+    private final Progress repository = new Progress() {
+        public List<StudentScore> readProgress() {
+            return List.of(new StudentScore("Иванов", 42), new StudentScore("Петров", 30));
         }
-        public List<List<Object>> readUsers() {
-            return List.of(List.of("Иванов", "@Student"), List.of("Петров", "another"));
+        public List<TelegramAccount> readUsers() {
+            return List.of(new TelegramAccount("Иванов", "@Student"), new TelegramAccount("Петров", "another"));
         }
     };
     private final ProgressService service = new ProgressService(repository, Set.of(100L));
@@ -32,10 +32,10 @@ class ProgressServiceTest {
 
     @Test
     void duplicateUsernameIsRejected() throws Exception {
-        ProgressRepository duplicates = new ProgressRepository() {
-            public List<List<Object>> readProgress() { return List.of(); }
-            public List<List<Object>> readUsers() {
-                return List.of(List.of("Иванов", "student"), List.of("Петров", "@Student"));
+        Progress duplicates = new Progress() {
+            public List<StudentScore> readProgress() { return List.of(); }
+            public List<TelegramAccount> readUsers() {
+                return List.of(new TelegramAccount("Петров", "student"), new TelegramAccount("Петров", "@Student"));
             }
         };
         assertTrue(new ProgressService(duplicates, Set.of()).handle(1, "student", "/points")

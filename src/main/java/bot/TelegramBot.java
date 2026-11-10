@@ -93,7 +93,6 @@ public class TelegramBot {
                     offset = nextOffset;
                 }
             } catch (IOException | RuntimeException e) {
-                // URL запроса содержит токен, поэтому не выводим текст ошибки.
                 System.err.println("Ошибка связи с Telegram. Повтор через 5 секунд.");
                 Thread.sleep(5000);
             }
