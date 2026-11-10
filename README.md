@@ -21,14 +21,31 @@ mvn clean install
 
 ## Структура проекта
 
-Пакет `storage` содержит основные сущности и логику:
-
-- [`Team`](src/main/java/storage/Team.java) команда из 1 до 3 участников
-- [`Exercise`](src/main/java/storage/Exercise.java) учебное задание
-- [`Submission`](src/main/java/storage/Submission.java) запись о сдаче задания командой
-- [`Storage`](src/main/java/storage/Storage.java) хранилище записей и заданий
-- [`ConsoleHandler`](src/main/java/console/ConsoleHandler.java) консольное меню и ввод данных
-- [`SheetsExporter`](src/main/java/storage/SheetsExporter.java) отправка записей в Google Sheets
+```bash
+└── main
+├── java
+│   ├── bot
+│   │   ├── ProgressRepository  // Интерфейс с методами 
+│   │   ├── ProgressService     // Решавет что ответить пользователю
+│   │   └── TelegramBot         // Содержит Long Pool опрос
+│   ├── console
+│   │   ├── ConsoleHandler
+│   │   └── MenuOption
+│   ├── sheets
+│   │   ├── ResultExporter
+│   │   ├── ScoreSummary
+│   │   ├── SheetsExporter
+│   │   └── SheetsProgressRepository
+│   ├── storage >
+│   ├── submission >
+│   ├── BotMain
+│   └── Main
+└── resources
+├── 3-task-structure.png
+├── credentials.json
+├── credentials-example.json
+└── telegram-bot-example.json
+```
 
 Тесты (JUnit 5) лежат в src/test/java и покрывают Team, Exercise, Submission, Storage и ConsoleHandler.
 
@@ -37,3 +54,5 @@ mvn clean install
 ## Статус
 
 Проект в разработке. Актуальный список готового находится в [DEVELOPER.md](DEVELOPER.md).
+
+Telegram-бот запускается отдельно через `BotMain`. Команда `/points` показывает баллы студента, `/group` доступна администраторам. Формат второго листа и настройки, в том числе необязательный прокси, описаны в [DEVELOPER.md](DEVELOPER.md#telegram-бот).
