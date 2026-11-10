@@ -24,6 +24,17 @@ public class StorageTest {
         assertTrue(storage.getAll().contains(submission));
     }
 
+    // Та же команда и то же задание, даже в другом порядке фамилий, второй раз не пишутся.
+    @Test
+    void rejectsDuplicateTeamAndExercise() {
+        storage.add(submission);
+        Team reversed = new Team(List.of("Перервенко", "Кабаев"));
+        Exercise sameTask = new Exercise("КАК ОТЧИСЛИТЬ СТУДЕНТА", LocalDate.of(2026, 10, 1));
+        Submission duplicate = new Submission(9, reversed, sameTask, 1.0);
+        assertThrows(IllegalArgumentException.class, () -> storage.add(duplicate));
+        assertEquals(1, storage.getAll().size());
+    }
+
     // 2. Попробовать изменить получаемую коллекцию
     @Test
     void throwsUnsupportedOperationException() {
