@@ -14,6 +14,8 @@ import submission.Submission;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +54,13 @@ public class SheetsExporter implements ResultExporter {
             }
         }
         row.add(submission.exercise().getName());
+        LocalDate deadline = submission.exercise().getDeadline();
+        if (deadline != null) {
+            String formattedDate = deadline.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            row.add(formattedDate);
+        } else {
+            row.add(""); // На случай, если дедлайна почему-то нет
+        }
         row.add(submission.score());
 
         // Кусок 2: сначала журнал сдач на Sheet1, затем пересчёт A:B на втором листе.
@@ -68,7 +77,7 @@ public class SheetsExporter implements ResultExporter {
     }
 
     private void rewriteSummary() throws IOException {
-        List<List<Object>> summary = ScoreSummary.build(read("Sheet1!A:E"), read(quoted(summarySheet) + "!D2:D"));
+        List<List<Object>> summary = ScoreSummary.build(read("Sheet1!A:F"), read(quoted(summarySheet) + "!D2:D"));
         service.spreadsheets().values()
                 .clear(spreadsheetId, quoted(summarySheet) + "!A:B", new ClearValuesRequest())
                 .execute();

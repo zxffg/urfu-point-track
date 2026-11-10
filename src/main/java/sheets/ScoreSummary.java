@@ -8,7 +8,7 @@ import java.util.Map;
 
 // Считает итоговые баллы по фамилиям. Таблица хранит результат, формулы в ней не нужны.
 public final class ScoreSummary {
-    private static final int SCORE_COLUMN = 4;
+    private static final int SCORE_COLUMN = 5;
 
     private ScoreSummary() {
     }

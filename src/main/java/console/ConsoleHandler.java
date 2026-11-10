@@ -106,7 +106,8 @@ public class ConsoleHandler {
         // Создание Submission + добавление в Storage и SheetsAPI
         try {
             Submission returnedSubmission = service.createSubmission(surnames, exerciseName, deadline, score);
-            System.out.println("Добавлена запись: " + returnedSubmission);
+            // TODO: изменить парсинг сообщения
+             System.out.println("Добавлена запись: " + returnedSubmission);
         } catch (IllegalArgumentException e) {
             System.out.println("Ошибка создания записи: " + e.getMessage());
         }
