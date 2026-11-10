@@ -10,9 +10,9 @@ class ScoreSummaryTest {
     @Test
     void teamScoreIsAddedToEveryMember() {
         List<List<Object>> rows = List.of(
-                List.of("Фамилия 1", "Фамилия 2", "Фамилия 3", "Задача", "Баллы"),
-                List.of("Иванов", "Петров", "", "ЛР1", 2),
-                List.of("иванов", "", "", "ЛР2", "1,5")
+                List.of("Фамилия 1", "Фамилия 2", "Фамилия 3", "Задача", "Дедлайн", "Баллы"),
+                List.of("Иванов", "Петров", "", "ЛР1", "23-11-2007", 2),
+                List.of("иванов", "", "", "ЛР2", "23-11-2008", "1,5")
         );
         List<List<Object>> roster = List.of(List.of("Петров"), List.of("Сидоров"));
 
@@ -26,7 +26,7 @@ class ScoreSummaryTest {
 
     @Test
     void sameCaseStaysTheSameWhenBuiltTwice() {
-        List<List<Object>> rows = List.of(List.of("Иванов", "Петров", "", "ЛР1", 2));
+        List<List<Object>> rows = List.of(List.of("Иванов", "Петров", "", "ЛР1", "23-11-2026", 2));
 
         List<List<Object>> first = ScoreSummary.build(rows, List.of());
         List<List<Object>> second = ScoreSummary.build(rows, List.of());
@@ -41,7 +41,7 @@ class ScoreSummaryTest {
 
     @Test
     void sameSurnameInOneRowIsCountedOnce() {
-        List<List<Object>> rows = List.of(List.of("Иванов", "Иванов", "", "ЛР1", 2));
+        List<List<Object>> rows = List.of(List.of("Иванов", "Иванов", "", "ЛР1",  "23-11-2025", 2));
 
         assertEquals(List.of(
                 List.of("Студент", "Баллы"),
