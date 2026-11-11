@@ -5,6 +5,7 @@ import console.ConsoleHandler;
 import console.ModeOption;
 import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
 import sheets.ResultExporter;
+import sheets.SheetLayout;
 import sheets.SheetsExporter;
 import sheets.SheetsProgressRepository;
 import storage.Storage;
@@ -88,7 +89,7 @@ public class Main {
     }
 
     private static ProgressService progressService(String credentialsPath, String spreadsheetId) throws Exception {
-        String sheet = System.getenv().getOrDefault("SHEETS_SUMMARY_NAME", "Sheet2");
+        String sheet = SheetLayout.SUMMARY_SHEET;
         String adminIds = System.getenv().getOrDefault("TELEGRAM_ADMIN_IDS", "");
         Set<Long> admins = Arrays.stream(adminIds.split(","))
                 .map(String::strip)

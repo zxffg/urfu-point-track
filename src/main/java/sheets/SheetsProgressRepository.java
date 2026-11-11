@@ -36,14 +36,14 @@ public class SheetsProgressRepository implements Progress {
 
     // функция read возвращает List<List<Object>> потому что читает таблицу именно в таком формате
     private List<List<Object>> read(String range) throws IOException {
-        List<List<Object>> values = service.spreadsheets().values().get(spreadsheetId, sheetName + range)
+        List<List<Object>> values = service.spreadsheets().values().get(spreadsheetId, range)
                 .execute().getValues();
         return values == null ? List.of() : values;
     }
 
     // читаем фамлии и общий результат ↓↓↓↓ после парсим телеграм аккаунты
     public List<StudentScore> readProgress() throws IOException {
-        List<List<Object>> rows = read("!A2:B");
+        List<List<Object>> rows = read(sheetName + SheetLayout.SUMMARY_SCORES);
         List<StudentScore> scores = new ArrayList<>();
         // читаем строки и создаем запись
         for (List<Object> row : rows) {
@@ -56,7 +56,7 @@ public class SheetsProgressRepository implements Progress {
     }
 
     public List<TelegramAccount> readUsers() throws IOException {
-        List<List<Object>> rows = read("!D2:E");
+        List<List<Object>> rows = read(sheetName + SheetLayout.SUMMARY_USERS);
         List<TelegramAccount> accounts = new ArrayList<>();
 
         for (List<Object> row : rows) {
