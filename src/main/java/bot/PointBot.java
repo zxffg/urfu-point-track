@@ -1,101 +1,87 @@
 package bot;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
+import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
+import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
-// Long polling позволяет запускать бота без публичного веб-сервера.
-public class TelegramBot {
-    private final HttpClient client;
-    private final String apiUrl;
-    private final ProgressService service;
+public class PointBot implements LongPollingSingleThreadUpdateConsumer {
+    private static final int MESSAGE_LIMIT = 4000; // лимит сообщений
 
-    public TelegramBot(String token, String proxyHost, int proxyPort, ProgressService service) {
-        if (token == null || token.isBlank()) throw new IllegalArgumentException("Не задан TELEGRAM_BOT_TOKEN");
-        HttpClient.Builder builder = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15));
-        if (proxyHost != null && !proxyHost.isBlank()) {
-            if (proxyPort < 1 || proxyPort > 65535) throw new IllegalArgumentException("Неверный порт прокси");
-            builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
-        }
-        client = builder.build();
-        apiUrl = "https://api.telegram.org/bot" + token + "/";
-        this.service = service;
+    private final TelegramClient telegramClient;   // клиент: через него на сервер идут сообщения
+    private final ProgressService progressService; // сводная таблица с результатами и админы
+
+    public PointBot(String botToken, ProgressService progressService) {
+        this.telegramClient = new OkHttpTelegramClient(botToken);
+        this.progressService = progressService;
     }
 
-    private JsonObject request(String method, JsonObject body) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder(URI.create(apiUrl + method))
-                .timeout(Duration.ofSeconds(45)).header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(body.toString())).build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-        if (response.statusCode() != 200 || !json.get("ok").getAsBoolean()) {
-            throw new IOException("Ошибка Telegram API: HTTP " + response.statusCode());
+    @Override
+    public void consume(Update update) { // опрашиваем сервер / отвечаем на сообщения
+        if (!update.hasMessage() || !update.getMessage().hasText() || update.getMessage().getFrom() == null) {
+            return;
         }
-        return json;
-    }
-
-    private void send(long chatId, String text) throws IOException, InterruptedException {
-        // Большую сводку отправляем частями.
-        while (!text.isEmpty()) {
-            int end = Math.min(text.length(), 4000);
-            if (end < text.length() && Character.isHighSurrogate(text.charAt(end - 1))) end--;
-            JsonObject body = new JsonObject();
-            body.addProperty("chat_id", chatId);
-            body.addProperty("text", text.substring(0, end));
-            request("sendMessage", body);
-            text = text.substring(end);
+        // тг чат имеет свой тип, если это не личный чат то лив
+        if (!"private".equals(update.getMessage().getChat().getType())) {
+            return;
         }
-    }
 
-    public void run() throws InterruptedException {
-        long offset = 0;
-        while (!Thread.currentThread().isInterrupted()) {
+        // получаем данные для отправки сообщений
+        var message = update.getMessage();
+        long chatId = message.getChatId();
+        long userId = message.getFrom().getId();
+        String username = message.getFrom().getUserName();
+        boolean admin = progressService.isAdmin(userId);
+
+        BotCommand command = BotCommand.fromString(message.getText());
+        String answerText;
+        if (command == null) {
+            answerText = "Неизвестная команда. Используйте /help.";
+        } else {
             try {
-                JsonObject params = new JsonObject();
-                params.addProperty("offset", offset);
-                params.addProperty("timeout", 30);
-                JsonArray updates = request("getUpdates", params).getAsJsonArray("result");
-                for (var item : updates) {
-                    JsonObject update = item.getAsJsonObject();
-                    long nextOffset = update.get("update_id").getAsLong() + 1;
-                    if (!update.has("message")) {
-                        offset = nextOffset;
-                        continue;
-                    }
-                    JsonObject message = update.getAsJsonObject("message");
-                    if (!message.has("text") || !message.has("from") || !message.has("chat")) {
-                        offset = nextOffset;
-                        continue;
-                    }
-                    JsonObject chat = message.getAsJsonObject("chat");
-                    if (!"private".equals(chat.get("type").getAsString())) {
-                        offset = nextOffset;
-                        continue;
-                    }
-                    JsonObject from = message.getAsJsonObject("from");
-                    String username = from.has("username") ? from.get("username").getAsString() : null;
-                    String answer;
-                    try {
-                        answer = service.handle(from.get("id").getAsLong(), username, message.get("text").getAsString());
-                    } catch (IOException e) {
-                        System.err.println("Ошибка чтения таблицы: " + e.getMessage());
-                        answer = "Не удалось прочитать таблицу. Попробуйте позже.";
-                    }
-                    send(chat.get("id").getAsLong(), answer);
-                    offset = nextOffset;
-                }
-            } catch (IOException | RuntimeException e) {
-                System.err.println("Ошибка связи с Telegram. Повтор через 5 секунд.");
-                Thread.sleep(5000);
+                answerText = progressService.handle(userId, username, command.getServiceCommand());
+            } catch (Exception e) {
+                answerText = "Ошибка при обращении к таблице данных.";
+                e.printStackTrace();
             }
+        }
+
+        try {
+            send(chatId, answerText, keyboard(admin));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private ReplyKeyboardMarkup keyboard(boolean admin) {
+        KeyboardRow actions = new KeyboardRow("Мои баллы");
+        if (admin) {
+            actions.add("Разбаловка группы");
+        }
+        return ReplyKeyboardMarkup.builder()
+                .keyboardRow(actions)
+                .keyboardRow(new KeyboardRow("/help"))
+                .resizeKeyboard(true)
+                .build();
+    }
+
+    private void send(long chatId, String text, ReplyKeyboardMarkup keyboard) throws Exception {
+        int offset = 0;
+        boolean first = true;
+        while (offset < text.length()) { // если сообщение выходит за пределы допустимого лимита, переносим его в следующее
+            int end = Math.min(text.length(), offset + MESSAGE_LIMIT);
+            SendMessage.SendMessageBuilder<?, ?> builder = SendMessage.builder()
+                    .chatId(chatId)
+                    .text(text.substring(offset, end));
+            if (first) {
+                builder.replyMarkup(keyboard);
+                first = false;
+            }
+            telegramClient.execute(builder.build());
+            offset = end;
         }
     }
 }

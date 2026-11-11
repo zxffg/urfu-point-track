@@ -7,7 +7,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
 
-// Логика команд не зависит от способа хранения таблицы.
+// логика команд не зависит от способа хранения таблицы
 public class ProgressService {
     private final Progress progress;
     private final Set<Long> admins;
@@ -15,6 +15,11 @@ public class ProgressService {
     public ProgressService(Progress progress, Set<Long> admins) {
         this.progress = progress;
         this.admins = Set.copyOf(admins);
+    }
+
+    // проверяем является ли админом
+    public boolean isAdmin(long userId) {
+        return admins.contains(userId);
     }
 
     private String normalize(String value) {

@@ -49,7 +49,7 @@ public class ConsoleHandler {
         }
     }
 
-    // Меню
+    // меню
     private void printMenu() {
         for (MenuOption option : MenuOption.values()) {
             System.out.println(option.getCode() + " - " + option.getLabel());

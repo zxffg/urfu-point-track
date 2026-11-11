@@ -47,11 +47,9 @@ public class SheetsProgressRepository implements Progress {
         List<StudentScore> scores = new ArrayList<>();
         // читаем строки и создаем запись
         for (List<Object> row : rows) {
-            if (row.size() >= 2) { // если есть две колонки (иначе не валидно)
-                String name = row.get(0).toString();
-                double score = (double) row.get(1);
-
-                scores.add(new StudentScore(name, score));
+            if (row.size() >= 2 && !row.get(0).toString().isBlank()) {
+                String name = row.get(0).toString().strip();
+                scores.add(new StudentScore(name, score(row.get(1))));
             }
         }
         return scores;
@@ -70,5 +68,12 @@ public class SheetsProgressRepository implements Progress {
             }
         }
         return accounts;
+    }
+
+    private double score(Object value) {
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        return Double.parseDouble(value.toString().strip().replace(',', '.'));
     }
 }
