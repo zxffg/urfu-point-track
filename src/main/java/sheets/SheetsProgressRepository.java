@@ -14,6 +14,11 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static sheets.SheetLayout.SUMMARY_SCORES;
+import static sheets.SheetLayout.SUMMARY_SHEET;
+import static sheets.SheetLayout.SUMMARY_USERS;
+import static sheets.SheetLayout.range;
+
 // Читает сводку и пользователей со второго листа.
 public class SheetsProgressRepository implements Progress {
     private final Sheets service;
@@ -23,7 +28,7 @@ public class SheetsProgressRepository implements Progress {
     public SheetsProgressRepository(String credentialsPath, String spreadsheetId, String sheetName)
             throws IOException, GeneralSecurityException {
         this.spreadsheetId = spreadsheetId;
-        this.sheetName = "'" + sheetName.replace("'", "''") + "'";
+        this.sheetName = sheetName;
         GoogleCredentials credentials;
         try (FileInputStream input = new FileInputStream(credentialsPath)) {
             credentials = GoogleCredentials.fromStream(input)
@@ -43,7 +48,7 @@ public class SheetsProgressRepository implements Progress {
 
     // читаем фамлии и общий результат ↓↓↓↓ после парсим телеграм аккаунты
     public List<StudentScore> readProgress() throws IOException {
-        List<List<Object>> rows = read(sheetName + SheetLayout.SUMMARY_SCORES);
+        List<List<Object>> rows = read(range(sheetName, SUMMARY_SCORES));
         List<StudentScore> scores = new ArrayList<>();
         // читаем строки и создаем запись
         for (List<Object> row : rows) {
@@ -56,7 +61,7 @@ public class SheetsProgressRepository implements Progress {
     }
 
     public List<TelegramAccount> readUsers() throws IOException {
-        List<List<Object>> rows = read(sheetName + SheetLayout.SUMMARY_USERS);
+        List<List<Object>> rows = read(range(sheetName, SUMMARY_USERS));
         List<TelegramAccount> accounts = new ArrayList<>();
 
         for (List<Object> row : rows) {
