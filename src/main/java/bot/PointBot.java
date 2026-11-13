@@ -14,7 +14,7 @@ public class PointBot implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;   // клиент: через него на сервер идут сообщения
     private final ProgressService progressService; // сводная таблица с результатами и админы
 
-    public PointBot(String botToken, ProgressService progressService) {
+    public PointBot(String botToken, ProgressService progressService) { // ПРОКСИ: это старый варинт
         this.telegramClient = new OkHttpTelegramClient(botToken);
         this.progressService = progressService;
     }
@@ -60,6 +60,7 @@ public class PointBot implements LongPollingSingleThreadUpdateConsumer {
         KeyboardRow actions = new KeyboardRow("Мои баллы");
         if (admin) {
             actions.add("Разбаловка группы");
+            actions.add("Пересчитать итоги");
         }
         return ReplyKeyboardMarkup.builder()
                 .keyboardRow(actions)

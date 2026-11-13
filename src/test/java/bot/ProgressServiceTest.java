@@ -1,11 +1,24 @@
 package bot;
 
 import org.junit.jupiter.api.Test;
+import sheets.ResultExporter;
+import submission.Submission;
+
 import java.util.List;
 import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProgressServiceTest {
+    private final ResultExporter exporter = new ResultExporter() {
+        @Override
+        public void export(Submission submission) {
+        }
+
+        @Override
+        public void rewriteSummary() {
+        }
+    };
+
     private final Progress repository = new Progress() {
         public List<StudentScore> readProgress() {
             return List.of(new StudentScore("Иванов", 42), new StudentScore("Петров", 30));
@@ -14,7 +27,7 @@ class ProgressServiceTest {
             return List.of(new TelegramAccount("Иванов", "@Student"), new TelegramAccount("Петров", "another"));
         }
     };
-    private final ProgressService service = new ProgressService(repository, Set.of(100L));
+    private final ProgressService service = new ProgressService(repository, Set.of(100L), exporter);
 
     @Test
     void studentSeesOnlyOwnScore() throws Exception {
@@ -38,7 +51,7 @@ class ProgressServiceTest {
                 return List.of(new TelegramAccount("Петров", "student"), new TelegramAccount("Петров", "@Student"));
             }
         };
-        assertTrue(new ProgressService(duplicates, Set.of()).handle(1, "student", "/points")
+        assertTrue(new ProgressService(duplicates, Set.of(), exporter).handle(1, "student", "/points")
                 .contains("повторяющиеся"));
     }
 }

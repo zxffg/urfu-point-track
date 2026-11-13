@@ -30,7 +30,7 @@ public class ConsoleHandlerTest {
 
     // 1. Валидное создание
     @Test
-    void validCreateSubmission() {
+    void validCreateSubmission() throws Exception {
         Submission result = service.createSubmission(
                 List.of("Иванов"), "ООП", LocalDate.of(2026, 9, 24), 2.0);
 
@@ -40,7 +40,7 @@ public class ConsoleHandlerTest {
 
     // 2. Проверка, что переиспользуется существующая задача
     @Test
-    void reusesExistingExerciseAcrossSubmissions() {
+    void reusesExistingExerciseAcrossSubmissions() throws Exception {
         Submission first = service.createSubmission(
                 List.of("Иванов"), "ООП", LocalDate.of(2026, 9, 24), 2.0);
         Submission second = service.createSubmission(
@@ -60,7 +60,7 @@ public class ConsoleHandlerTest {
 
     // 4. Проверка вызова .exporter()
     @Test
-    void callsExporterOnEverySubmission() {
+    void callsExporterOnEverySubmission() throws Exception {
         FakeExporter fakeExporter = new FakeExporter();
         SubmissionService service = new SubmissionService(storage, fakeExporter);
 

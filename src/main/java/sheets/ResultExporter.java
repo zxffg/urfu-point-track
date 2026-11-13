@@ -4,7 +4,9 @@
 package sheets;
 
 import submission.Submission;
+import java.io.IOException;
 
 public interface ResultExporter {
-    void export(Submission submission);
+    void export(Submission submission) throws IOException;
+    void rewriteSummary() throws IOException;
 }

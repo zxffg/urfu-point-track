@@ -7,7 +7,9 @@ public enum BotCommand {
     POINTS("мои баллы", "/points"),
     POINTS_SLASH("/points", "/points"),
     GROUP("разбаловка группы", "/group"),
-    GROUP_SLASH("/group", "/group");
+    GROUP_SLASH("/group", "/group"),
+    RECALCULATE("пересчитать итоги", "/recalculate"),
+    RECALCULATE_SLASH("/recalculate", "/recalculate");
 
     private final String commandName;    // что прислал пользователь (кнопка или текст)
     private final String serviceCommand; // то, что ждет progressService

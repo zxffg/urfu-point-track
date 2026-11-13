@@ -34,6 +34,6 @@ public class Team {
         return id;
     }
     public List<String> getSurnames() {
-        return surnames;
+        return List.copyOf(surnames);
     }
 }

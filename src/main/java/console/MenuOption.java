@@ -6,6 +6,7 @@ public enum MenuOption {
     // enum для клавиатуры пользователя
     ADD_SUBMISSION("1", "Добавить решение."),
     SHOW_ALL("2", "Показать все решения."),
+    REWRITE_SUMMARY("3", "Пересчитать итоги."),
     EXIT("0", "Выйти.");
 
     private final String code;

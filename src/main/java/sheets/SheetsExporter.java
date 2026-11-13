@@ -40,7 +40,7 @@ public class SheetsExporter implements ResultExporter {
 
     // функция export(), которая вставляет сдачу и заново записывает итоги.
     @Override
-    public void export(Submission submission) {
+    public void export(Submission submission) throws IOException {
         // кусок 1: три фамилии, название задачи и балл. Пустые места в команде остаются пустыми ячейками.
         List<Object> row = new ArrayList<>();
         List<String> surnames = submission.team().getSurnames();
@@ -63,19 +63,38 @@ public class SheetsExporter implements ResultExporter {
 
         // кусок 2: сначала журнал сдач на Sheet1, затем пересчёт A:B на втором листе.
         // колонки D:E второго листа — это ручной список Telegram, его код не трогает.
+        // деление ошибок при успешном добавлении записи и проваленом обновлении итогов и наоборот
+        String appendRange = SheetLayout.range(
+                SheetLayout.SUBMISSION_SHEET,
+                SheetLayout.SUBMISSIONS_APPEND
+        );
+
         try {
-            String appendRange = SheetLayout.range(SheetLayout.SUBMISSION_SHEET, SheetLayout.SUBMISSIONS_APPEND);
             service.spreadsheets().values()
                     .append(spreadsheetId, appendRange, new ValueRange().setValues(List.of(row)))
                     .setValueInputOption("USER_ENTERED")
                     .execute();
+        } catch (IOException e) {
+            throw new IOException(
+                    "Не удалось подтвердить добавление записи. "
+                            + "Проверьте Sheet1 перед повтором.",
+                    e
+            );
+        }
+
+        try {
             rewriteSummary();
         } catch (IOException e) {
-            System.out.println("Ошибка при отправке в Google Sheets: " + e.getMessage());
+            throw new IOException(
+                    "Запись добавлена в Sheet1, но итоги не обновлены. "
+                            + "Запустите пересчёт итогов, не добавляя запись повторно.",
+                    e
+            );
         }
     }
 
-    private void rewriteSummary() throws IOException {
+    @Override
+    public void rewriteSummary() throws IOException {
         String submissionsRange = SheetLayout.range(SheetLayout.SUBMISSION_SHEET, SheetLayout.SUBMISSIONS_READ);
         String rosterRange = SheetLayout.range(SheetLayout.SUMMARY_SHEET, SheetLayout.SUMMARY_ROSTER);
         List<List<Object>> summary = ScoreSummary.build(read(submissionsRange), read(rosterRange));

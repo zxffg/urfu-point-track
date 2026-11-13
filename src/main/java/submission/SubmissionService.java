@@ -5,6 +5,7 @@ import sheets.ResultExporter;
 import storage.Storage;
 import storage.Team;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,7 +21,10 @@ public class SubmissionService {
 
     // Метод добавления Submission
     // Фамилии -> Задания -> Баллы
-    public Submission createSubmission(List<String> surnames, String exerciseName, LocalDate deadline, double score) {
+    public Submission createSubmission(List<String> surnames,
+                                       String exerciseName,
+                                       LocalDate deadline,
+                                       double score) throws IOException {
         // Команда -> проверка "существует ли такое задание?" -> создание решения.
         Team team = new Team(surnames);
         Exercise exercise = storage.findOrCreateEx(exerciseName, deadline);
@@ -33,5 +37,10 @@ public class SubmissionService {
     // Использует getAll() из Storage.java
     public List<Submission> getAllSubmissions() {
         return storage.getAll();
+    }
+
+    // перерасчет итогов
+    public void rewriteSummary() throws IOException {
+        exporter.rewriteSummary();
     }
 }

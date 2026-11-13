@@ -7,14 +7,18 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import sheets.ResultExporter;
+
 // логика команд не зависит от способа хранения таблицы
 public class ProgressService {
     private final Progress progress;
+    private final ResultExporter exporter;
     private final Set<Long> admins;
 
-    public ProgressService(Progress progress, Set<Long> admins) {
+    public ProgressService(Progress progress, Set<Long> admins, ResultExporter exporter) {
         this.progress = progress;
         this.admins = Set.copyOf(admins);
+        this.exporter = exporter;
     }
 
     // проверяем является ли админом
@@ -41,13 +45,26 @@ public class ProgressService {
     public String handle(long userId, String username, String text) throws IOException {
         String command = text.strip().split("\\s+", 2)[0].split("@", 2)[0].toLowerCase(Locale.ROOT);
         if (command.equals("/start") || command.equals("/help")) {
-            return "Команды: /points - мои баллы, /group - успеваемость группы для администратора.";
+            if (!isAdmin(userId)) {
+                return "Команды: /points - мои баллы.";
+            }
+
+            return "Команды: /group - успеваемость группы, "
+                    + "/recalculate - пересчитать итоги";
         }
         if (command.equals("/group")) {
-            if (!admins.contains(userId)) {
+            if (!isAdmin(userId)) {
                 return "Доступ запрещен.";
             }
             return groupReport();
+        }
+        if (command.equals("/recalculate")) {
+            if (!isAdmin(userId)) {
+                return "Доступ запрещен.";
+            }
+
+            exporter.rewriteSummary();
+            return "Итоги пересчитаны.";
         }
         if (!command.equals("/points")) {
             return "Неизвестная команда. Используйте /help.";

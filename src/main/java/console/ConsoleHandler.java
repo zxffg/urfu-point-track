@@ -6,8 +6,10 @@ import storage.*;
 import submission.Submission;
 import submission.SubmissionService;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +45,7 @@ public class ConsoleHandler {
             switch (selected.get()) {
                 case ADD_SUBMISSION -> addSubmission();
                 case SHOW_ALL -> showAll();
+                case REWRITE_SUMMARY -> rewriteSummary();
                 case EXIT -> { return; }
                 default -> System.out.println("Неизвестная команда.");
             }
@@ -53,6 +56,16 @@ public class ConsoleHandler {
     private void printMenu() {
         for (MenuOption option : MenuOption.values()) {
             System.out.println(option.getCode() + " - " + option.getLabel());
+        }
+    }
+
+    // пересчет итогов
+    private void rewriteSummary() {
+        try {
+            service.rewriteSummary();
+            System.out.println("Итоги пересчитаны.");
+        } catch (IOException e) {
+            System.out.println("Не удалось пересчитать итоги: " + e.getMessage());
         }
     }
 
@@ -82,7 +95,11 @@ public class ConsoleHandler {
         System.out.println("Введите дедлайн задачи в формате 'DD-MM-YYYY':");
         LocalDate deadline = null;
         try {
-            deadline = LocalDate.parse(scanner.nextLine(), DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            DateTimeFormatter formatter = DateTimeFormatter // форматирование дат
+                    .ofPattern("dd-MM-uuuu")
+                    .withResolverStyle(ResolverStyle.STRICT);
+
+            deadline = LocalDate.parse(scanner.nextLine(), formatter);
         } catch (DateTimeParseException e) {
             System.out.println("Ошибка парсинга deadline: " + e.getMessage());
             return;
@@ -106,10 +123,11 @@ public class ConsoleHandler {
         // Создание Submission + добавление в Storage и SheetsAPI
         try {
             Submission returnedSubmission = service.createSubmission(surnames, exerciseName, deadline, score);
-            // TODO: изменить парсинг сообщения
-             System.out.println("Добавлена запись: " + returnedSubmission);
+            System.out.println("Добавлена запись: " + returnedSubmission);
         } catch (IllegalArgumentException e) {
             System.out.println("Ошибка создания записи: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
         }
     }
 
