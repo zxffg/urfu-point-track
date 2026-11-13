@@ -16,13 +16,8 @@ public enum MenuOption {
         this.label = label;
     }
 
-    public String getCode() {
-        return code;
-    }
-
-    public String getLabel() {
-        return label;
-    }
+    public String getCode() {  return code; }
+    public String getLabel() { return label; }
 
     // поиск enum-значения по введённому пользователем коду
     public static Optional<MenuOption> fromCode(String code) {
