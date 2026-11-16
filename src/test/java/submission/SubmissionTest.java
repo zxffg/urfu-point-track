@@ -1,12 +1,14 @@
-package storage;
+package submission;
 
 import org.junit.jupiter.api.Test;
-import submission.Submission;
+import storage.Exercise;
+import storage.Team;
 
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SubmissionTest {
     // 1. Тест на обычное создание подчинения
@@ -26,7 +28,7 @@ public class SubmissionTest {
     // Пожалуй логично создать два объекта и проверить айди следующего
     @Test
     void createWithIdIncrement() {
-        Team team = new Team(List.of("Кабаев", "Перервенко"));
+        Team team = new Team(List.of("Кабаев", "Undefined"));
         Exercise exercise = new Exercise("Как отчислить студента", LocalDate.of(2026, 9, 24));
 
         Submission first = Submission.create(team, exercise, 2.0);
@@ -35,6 +37,26 @@ public class SubmissionTest {
         // Так как nextId - это статик поле и оно общее для всех, то
         // надо отталкиваться от фактически присвоенных значений.
         assertEquals(first.id() + 1, second.id());
+    }
+
+    // 4. Балл <0
+    @Test
+    void scoreLSZero() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            Team team = new Team(List.of("Кабаев", "Undefined"));
+            Exercise exercise = new Exercise("Как отчислить студента", LocalDate.of(2026, 9, 24));
+            Submission submission = new Submission(1, team, exercise, -1);
+        });
+    }
+
+    // 5. Балл >2 и <0
+    @Test
+    void scoreGTTwo() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            Team team = new Team(List.of("Кабаев", "Undefined"));
+            Exercise exercise = new Exercise("Как отчислить студента", LocalDate.of(2026, 9, 24));
+            Submission submission = new Submission(1, team, exercise, 3);
+        });
     }
 }
 

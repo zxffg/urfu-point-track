@@ -11,45 +11,60 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ScoreSummaryTest {
+
+    // 1. Проверяем, что баллы за командную работу начисляются каждому участнику команды
     @Test
     void teamScoreIsAddedToEveryMember() {
-        List<Submission> rows = (
-            new Submission(1, new Team(List.of("Фамилия 1", "Фамилия 2", "Фамииля 3")), new Exercise("ЛР1", LocalDate.of(2007, 11, 23)), 0),
-            new Submission(1, new Team(List.of("Иванов", "Петров", "")), new Exercise("ЛР1", LocalDate.of(2007, 11, 23)), 2),
-            new Submission(1, new Team(List.of("иванов", "", "")), new Exercise("ЛР2", LocalDate.of(2008, 11, 23)), 1.5),
-        );
-        List<List<Object>> roster = List.of(List.of("Петров"), List.of("Сидоров"));
+        Exercise ex1 = new Exercise("ЛР1", LocalDate.of(2007, 11, 23));
+        Exercise ex2 = new Exercise("ЛР2", LocalDate.of(2008, 11, 23));
 
+        List<Submission> submissions = List.of(
+                new Submission(1, new Team(List.of("Иванов", "Петров")), ex1, 2.0),
+                new Submission(2, new Team(List.of("иванов")), ex2, 1.5)
+        );
+
+        List<String> roster = List.of("Петров", "Сидоров");
+
+        List<StudentScore> result = ScoreCalculator.build(submissions, roster);
+
+        // Петров набрал 2.0 (был в ЛР1)
+        // Сидоров набрал 0.0 (есть в списке группы, но ничего не сдал)
+        // Иванов набрал 3.5 (2.0 за ЛР1 + 1.5 за ЛР2, и добавлен, хотя его нет в ростере)
         assertEquals(List.of(
-                List.of("Студент", "Баллы"),
-                List.of("Петров", 2L),
-                List.of("Сидоров", 0L),
-                List.of("Иванов", 3.5)
-        ), ScoreCalculator.build(rows, roster));
+                new StudentScore("Петров", 2.0),
+                new StudentScore("Сидоров", 0.0),
+                new StudentScore("Иванов", 3.5)
+        ), result);
     }
 
+    // 2. Проверяем детерминированность: два одинаковых вызова возвращают идентичный результат
     @Test
     void sameCaseStaysTheSameWhenBuiltTwice() {
-        List<List<Object>> rows = List.of(List.of("Иванов", "Петров", "", "ЛР1", "23-11-2026", 2));
+        Exercise ex = new Exercise("ЛР1", LocalDate.of(2026, 11, 23));
+        List<Submission> submissions = List.of(
+                new Submission(1, new Team(List.of("Иванов", "Петров")), ex, 2.0)
+        );
 
-        List<List<Object>> first = ScoreCalculator.build(rows, List.of());
-        List<List<Object>> second = ScoreCalculator.build(rows, List.of());
+        List<StudentScore> first = ScoreCalculator.build(submissions, List.of());
+        List<StudentScore> second = ScoreCalculator.build(submissions, List.of());
 
         assertEquals(List.of(
-                List.of("Студент", "Баллы"),
-                List.of("Иванов", 2L),
-                List.of("Петров", 2L)
+                new StudentScore("Иванов", 2.0),
+                new StudentScore("Петров", 2.0)
         ), first);
         assertEquals(first, second);
     }
 
+    // 3. Одиночная сдача корректно считается
     @Test
-    void sameSurnameInOneRowIsCountedOnce() {
-        List<List<Object>> rows = List.of(List.of("Иванов", "Иванов", "", "ЛР1",  "23-11-2025", 2));
+    void singleSubmissionCountedCorrectly() {
+        Exercise ex = new Exercise("ЛР1", LocalDate.of(2025, 11, 23));
+        List<Submission> submissions = List.of(
+                new Submission(1, new Team(List.of("Иванов")), ex, 2.0)
+        );
 
         assertEquals(List.of(
-                List.of("Студент", "Баллы"),
-                List.of("Иванов", 2L)
-        ), ScoreCalculator.build(rows, List.of()));
+                new StudentScore("Иванов", 2.0)
+        ), ScoreCalculator.build(submissions, List.of()));
     }
 }

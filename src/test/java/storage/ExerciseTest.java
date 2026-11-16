@@ -13,8 +13,8 @@ public class ExerciseTest {
     @Test
     void createValid() {
         Exercise exercise = new Exercise("Как поймать должника", LocalDate.of(2026, 9, 24));
-        assertEquals("Как поймать должника", exercise.getName());
-        assertEquals(LocalDate.of(2026, 9, 24), exercise.getDeadline());
+        assertEquals("Как поймать должника", exercise.name());
+        assertEquals(LocalDate.of(2026, 9, 24), exercise.deadline());
     }
 
     // 2. Создание с пустым именем
@@ -29,9 +29,8 @@ public class ExerciseTest {
     @Test
     void createNoneDate() {
         assertThrows(IllegalArgumentException.class, () -> {
-            LocalDate noli = null;
-            new Exercise("50 пересдач", noli);
+            LocalDate zerodate = null;
+            new Exercise("50 пересдач", zerodate);
         });
     }
-
 }
