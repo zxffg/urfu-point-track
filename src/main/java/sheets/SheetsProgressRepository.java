@@ -8,9 +8,15 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
+import storage.Exercise;
+import storage.Team;
+import submission.Submission;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +25,7 @@ import static sheets.SheetLayout.SUMMARY_SHEET;
 import static sheets.SheetLayout.SUMMARY_USERS;
 import static sheets.SheetLayout.range;
 
-// Читает сводку и пользователей со второго листа.
+// читает сводку, пользователей и записи сдач
 public class SheetsProgressRepository implements Progress {
     private final Sheets service;
     private final String spreadsheetId;
@@ -39,7 +45,7 @@ public class SheetsProgressRepository implements Progress {
                 .setApplicationName("urfu-point-track").build();
     }
 
-    // функция read возвращает List<List<Object>> потому что читает таблицу именно в таком формате
+    // read возвращает List<List<Object>> потому что читает таблицу именно в таком формате
     private List<List<Object>> read(String range) throws IOException {
         List<List<Object>> values = service.spreadsheets().values().get(spreadsheetId, range)
                 .execute().getValues();
@@ -73,6 +79,57 @@ public class SheetsProgressRepository implements Progress {
             }
         }
         return accounts;
+    }
+
+    public List<Submission> loadAllSubmissions() throws IOException {
+        // получает данные
+        String range = SheetLayout.range(SheetLayout.SUBMISSION_SHEET, SheetLayout.SUBMISSIONS);
+        List<List<Object>> rows = read(range);
+
+        // единый submission создаваемый при запуске
+        List<Submission> submissions = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        int idCounter = 1;
+        for (List<Object> row : rows) {
+            // проверка для записей: должна быть минимум одна фамилия и кол-во столбцов =6
+            if (row.size() < 6 || row.get(0).toString().isBlank()) {
+                continue;
+            }
+
+            // собираем фамилии
+            List<String> surnames = new ArrayList<>();
+            for (int i = 0; i < SheetLayout.TEAM_SIZE; ++i) {
+                if (i < row.size()) {
+                    String surname = row.get(i).toString().strip();
+                    if (!surname.isBlank()) {
+                        surnames.add(surname);
+                    }
+                }
+            }
+            if (surnames.isEmpty()) continue;
+
+            // собираем задачу
+            String exerciseName = row.get(3).toString().strip();
+
+            // дедлайн
+            LocalDate deadline;
+            try {
+                deadline = LocalDate.parse(row.get(4).toString().strip(), formatter);
+            } catch (Exception e) {
+                deadline = LocalDate.now(); // если дата повреждена
+            }
+
+            // баллы
+            Double score = score(row.get(5));
+
+            submissions.add(new Submission(
+                    idCounter++,
+                    new Team(surnames),
+                    new Exercise(exerciseName, deadline),
+                    score
+            ));
+        }
+        return submissions;
     }
 
     private double score(Object value) {

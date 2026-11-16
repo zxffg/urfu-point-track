@@ -9,7 +9,6 @@ import java.util.function.Predicate;
 
 import sheets.ResultExporter;
 
-// логика команд не зависит от способа хранения таблицы
 public class ProgressService {
     private final Progress progress;
     private final ResultExporter exporter;
@@ -30,49 +29,36 @@ public class ProgressService {
         return value.strip().replaceFirst("^@", "").toLowerCase(Locale.ROOT);
     }
 
-    // шаблон функции поиска по условию
-    private <T> List<T> matches(List<T> items, Predicate<T> predicate) {
-        List<T> found = new ArrayList<>();
-        for (T item : items) {
-            if (predicate.test(item)) {
-                found.add(item);
+    // команды
+    public String handle(long userId, String username, BotCommand command) throws IOException {
+        return switch (command) {
+            case START, HELP -> {
+                if (!isAdmin(userId)) {
+                    yield "Команды: /points - мои баллы.";
+                }
+                yield "Команды: /group - успеваемость группы, /recalculate - пересчитать итоги.";
             }
-        }
-        return found;
-    }
-
-    // разбираем полученную команду и уходим в ветвление
-    public String handle(long userId, String username, String text) throws IOException {
-        String command = text.strip().split("\\s+", 2)[0].split("@", 2)[0].toLowerCase(Locale.ROOT);
-        if (command.equals("/start") || command.equals("/help")) {
-            if (!isAdmin(userId)) {
-                return "Команды: /points - мои баллы.";
+            case GROUP -> {
+                if (!isAdmin(userId)) {
+                    yield "Доступ запрещен.";
+                }
+                yield groupReport();
             }
-
-            return "Команды: /group - успеваемость группы, "
-                    + "/recalculate - пересчитать итоги";
-        }
-        if (command.equals("/group")) {
-            if (!isAdmin(userId)) {
-                return "Доступ запрещен.";
+            case RECALCULATE -> {
+                if (!isAdmin(userId)) {
+                    yield "Доступ запрещен.";
+                }
+                exporter.rewriteSummary();
+                yield "Итоги пересчитаны.";
             }
-            return groupReport();
-        }
-        if (command.equals("/recalculate")) {
-            if (!isAdmin(userId)) {
-                return "Доступ запрещен.";
+            case POINTS -> {
+                if (username == null || username.isBlank()) {
+                    yield "Укажите username в настройках Telegram.";
+                }
+                yield ownScore(username);
             }
-
-            exporter.rewriteSummary();
-            return "Итоги пересчитаны.";
-        }
-        if (!command.equals("/points")) {
-            return "Неизвестная команда. Используйте /help.";
-        }
-        if (username == null || username.isBlank()) {
-            return "Укажите username в настройках Telegram.";
-        }
-        return ownScore(username);
+            case UNKNOWN -> "Неизвестная команда. Используйте /help.";
+        };
     }
 
     // отчет по всей группе
@@ -86,10 +72,10 @@ public class ProgressService {
 
     // личный результат учащегося
     private String ownScore(String username) throws IOException {
-        List<TelegramAccount> accounts = matches(
-                progress.readUsers(),
-                account -> normalize(account.username()).equals(normalize(username))
-        );
+        List<TelegramAccount> accounts = progress.readUsers().stream()
+                .filter(account -> normalize(account.username()).equals(normalize(username)))
+                .toList();
+
         if (accounts.size() > 1) {
             return "Найдены повторяющиеся записи пользователя. Обратитесь к преподавателю.";
         }
@@ -98,10 +84,9 @@ public class ProgressService {
         }
         String student = accounts.getFirst().surname();
 
-        List<StudentScore> scores = matches(
-                progress.readProgress(),
-                score -> score.surname().equalsIgnoreCase(student)
-        );
+        List<StudentScore> scores = progress.readProgress().stream()
+                .filter(score -> score.surname().equalsIgnoreCase(student))
+                .toList();
         if (scores.size() > 1) {
             return "Найдены повторяющиеся записи студента. Обратитесь к преподавателю.";
         }

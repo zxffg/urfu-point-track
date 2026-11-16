@@ -49,6 +49,9 @@ public class Main {
         }
         try {
             Storage storage = new Storage();
+            // выгружаем записи из таблицы при запуске бота
+            SheetsProgressRepository repo = new SheetsProgressRepository(credentialsPath, spreadsheetId, SheetLayout.SUMMARY_SHEET);
+            storage.init(repo.loadAllSubmissions());
             ResultExporter exporter = new SheetsExporter(credentialsPath, spreadsheetId);
             SubmissionService service = new SubmissionService(storage, exporter);
             new ConsoleHandler(service).run();
@@ -129,7 +132,7 @@ public class Main {
                 .build();
         // 2. отдаем TelegramClient с этим прокси
         return new OkHttpTelegramClient(okHttpClient, botToken);
-        /* оастальная настрока происходит рукчками:
+        /* оастальная настрока происходит руками:
          3. передаем okHttpClient в TelegramBotsLongPollingApplication (для получения сообщений)
          Вместо `TelegramBotsLongPollingApplication botsApplication = new TelegramBotsLongPollingApplication()`
          делаем так TelegramBotsLongPollingApplication(ObjectMapper::new, () -> okHttpClient);
@@ -144,3 +147,14 @@ public class Main {
          */
     }
 }
+
+/*
+Список изменений:
+ - Сущности Excercise и Team теперь record - убрал бойлерплейты
+ - Упрощена логика добавления записи: теперь фамилии вводятся в одну строку без необходимости использовать /q
+ - Полностью изменена функция поиска повторяющихся задач. Раньше она возвращала такую, но ничего не происходило
+ - Полностью убран бесполезный шаблон функции mathes из ProgressService
+ - Переделана логика обрабоки команд. Раньше они парсились два раза, теперь везде по макимуму передается command получаемаый из BotCommand
+ - При запуске обнулялись все записи. Теперь exercise в Main читает все записи из таблицы
+ - ScoreSummary теперь ScoreCalculator -> теперь принимает
+*/

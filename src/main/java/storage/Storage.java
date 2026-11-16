@@ -3,12 +3,7 @@ package storage;
 import submission.Submission;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /*
@@ -18,6 +13,11 @@ import java.util.stream.Collectors;
 public class Storage {
     private final List<Submission> submissionsList;
     private final List<Exercise> exercises = new ArrayList<>();
+    private int lastId = 0;
+
+    public int nextId() {
+        return ++lastId;
+    }
 
     public Storage() {
         this.submissionsList = new ArrayList<>();
@@ -38,18 +38,17 @@ public class Storage {
     }
 
     private boolean sameWork(Submission left, Submission right) {
-        return left.exercise().getName().equalsIgnoreCase(right.exercise().getName())
+        return left.exercise().name().equalsIgnoreCase(right.exercise().name())
                 && surnames(left).equals(surnames(right));
     }
 
     private Set<String> surnames(Submission submission) {
-        return submission.team().getSurnames().stream()
+        return submission.team().surnames().stream()
                 .map(surname -> surname.strip().toLowerCase(Locale.ROOT))
                 .collect(Collectors.toSet());
     }
 
-    // Получение списка getAll()
-    // UnmodifiableList - защищает отдаваемый список от изменений
+    // получение списка getAll()
     public List<Submission> getAll() { return Collections.unmodifiableList(submissionsList); }
 
     // getByID - поиск по айди
@@ -59,26 +58,20 @@ public class Storage {
                 return subM;
             }
         }
-        throw new NoSuchElementException("Submission с id=\" + id + \" не найдена.");
+        throw new NoSuchElementException("Submission с id=" + id + " не найдена.");
     }
 
-    // Метод поиска ИЛИ создания новой задачи + возвращает ее.
-    public Exercise findOrCreateEx(String name, LocalDate deadline) {
-        // Проверка, что name и deadline не null
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Поле 'имя' не может быть пустым.");
-        }
-        if (deadline == null) {
-            throw new IllegalArgumentException("Дедлайн не может быть пустым.");
-        }
+    // поиск похожей задачи
+    public Optional<Exercise> findExercise(String name) {
+        return submissionsList.stream()
+                .map(Submission::exercise)
+                .filter(ex -> ex.name().equalsIgnoreCase(name))
+                .findFirst();
+    }
 
-        for (Exercise ex : exercises) {
-            if (ex.getName().equalsIgnoreCase(name)) {
-                return ex;
-            }
-        }
-        Exercise newExercise = new Exercise(name, deadline);
-        exercises.add(newExercise);
-        return newExercise;
+    // первичное чтение записей после запуска Main
+    public void init(List<Submission> initialData) {
+        this.submissionsList.addAll(initialData);
+        this.lastId = initialData.stream().mapToInt(Submission::id).max().orElse(0);
     }
 }

@@ -1,35 +1,29 @@
 package bot;
 
+import java.util.Locale;
+
 public enum BotCommand {
-    START("/start", "/start"),
-    HELP("/help", "/help"),
-    HELP_SHORT("/h", "/help"),
-    POINTS("мои баллы", "/points"),
-    POINTS_SLASH("/points", "/points"),
-    GROUP("разбаловка группы", "/group"),
-    GROUP_SLASH("/group", "/group"),
-    RECALCULATE("пересчитать итоги", "/recalculate"),
-    RECALCULATE_SLASH("/recalculate", "/recalculate");
+    START,
+    HELP,
+    POINTS,
+    GROUP,
+    RECALCULATE,
+    UNKNOWN;
 
-    private final String commandName;    // что прислал пользователь (кнопка или текст)
-    private final String serviceCommand; // то, что ждет progressService
-
-    BotCommand(String commandName, String serviceCommand) {
-        this.commandName = commandName;
-        this.serviceCommand = serviceCommand;
-    }
-
-    public String getServiceCommand() {
-        return serviceCommand;
-    }
-
-    public static BotCommand fromString(String text) {
-        String cleanText = text.strip().toLowerCase();
-        for (BotCommand cmd : values()) {
-            if (cmd.commandName.equalsIgnoreCase(cleanText)) {
-                return cmd;
-            }
+    public static BotCommand fromText(String text) {
+        if (text == null || text.isBlank()) {
+            return UNKNOWN;
         }
-        return null;
+
+        String clean = text.strip().toLowerCase(Locale.ROOT);
+
+        return switch (clean) {
+            case "/start" -> START;
+            case "/help", "/h" -> HELP;
+            case "мои баллы", "/points" -> POINTS;
+            case "разбаловка группы", "/group" -> GROUP;
+            case "пересчитать итоги", "/recalculate" -> RECALCULATE;
+            default -> UNKNOWN;
+        };
     }
 }

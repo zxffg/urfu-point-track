@@ -22,6 +22,7 @@ import java.util.List;
 public class SheetsExporter implements ResultExporter {
     private final Sheets service;
     private final String spreadsheetId;
+    private final SheetsProgressRepository repository;
 
     public SheetsExporter(String credentialsPath, String spreadsheetId) throws IOException, GeneralSecurityException {
         this.spreadsheetId = spreadsheetId;
@@ -36,6 +37,7 @@ public class SheetsExporter implements ResultExporter {
                 new HttpCredentialsAdapter(credentials))
                 .setApplicationName("urfu-point-track")
                 .build();
+        this.repository = new SheetsProgressRepository(credentialsPath, spreadsheetId, SheetLayout.SUMMARY_SHEET);
     }
 
     // функция export(), которая вставляет сдачу и заново записывает итоги.
@@ -43,7 +45,7 @@ public class SheetsExporter implements ResultExporter {
     public void export(Submission submission) throws IOException {
         // кусок 1: три фамилии, название задачи и балл. Пустые места в команде остаются пустыми ячейками.
         List<Object> row = new ArrayList<>();
-        List<String> surnames = submission.team().getSurnames();
+        List<String> surnames = submission.team().surnames();
         for (int i = 0; i < SheetLayout.TEAM_SIZE; i++) {
             if (i < surnames.size()) {
                 row.add(surnames.get(i));
@@ -51,8 +53,8 @@ public class SheetsExporter implements ResultExporter {
                 row.add("");
             }
         }
-        row.add(submission.exercise().getName());
-        LocalDate deadline = submission.exercise().getDeadline();
+        row.add(submission.exercise().name());
+        LocalDate deadline = submission.exercise().deadline();
         if (deadline != null) {
             String formattedDate = deadline.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
             row.add(formattedDate);
@@ -95,9 +97,24 @@ public class SheetsExporter implements ResultExporter {
 
     @Override
     public void rewriteSummary() throws IOException {
-        String submissionsRange = SheetLayout.range(SheetLayout.SUBMISSION_SHEET, SheetLayout.SUBMISSIONS_READ);
         String rosterRange = SheetLayout.range(SheetLayout.SUMMARY_SHEET, SheetLayout.SUMMARY_ROSTER);
-        List<List<Object>> summary = ScoreSummary.build(read(submissionsRange), read(rosterRange));
+        String submissionsRange = SheetLayout.range(SheetLayout.SUBMISSION_SHEET, SheetLayout.SUBMISSIONS_READ);
+
+        List<List<Object>> rosterRows = read(rosterRange);
+        List<String> students = rosterRows.stream()
+                .filter(row -> !row.isEmpty())
+                .map(row -> row.get(0).toString().strip())
+                .filter(name -> !name.isBlank())
+                .toList();
+        List<Submission> submissions = repository.loadAllSubmissions();
+
+        List<StudentScore> summary = ScoreCalculator.build(submissions, students);
+        List<List<Object>> sheetRows = new ArrayList<>();
+        sheetRows.add(List.of("Студент", "Баллы"));
+        for (StudentScore item : summary) {
+            Object formatted = (item.score() % 1 == 0) ? (long) item.score().doubleValue() : item.score();
+            sheetRows.add(List.of(item.surname(), formatted));
+        }
 
         String clearRange = SheetLayout.range(SheetLayout.SUMMARY_SHEET, SheetLayout.SUMMARY_CLEAR);
         service.spreadsheets().values()
@@ -106,7 +123,7 @@ public class SheetsExporter implements ResultExporter {
 
         String writeRange = SheetLayout.range(SheetLayout.SUMMARY_SHEET, SheetLayout.SUMMARY_WRITE);
         service.spreadsheets().values()
-                .update(spreadsheetId, writeRange, new ValueRange().setValues(summary))
+                .update(spreadsheetId, writeRange, new ValueRange().setValues(sheetRows))
                 .setValueInputOption("RAW")
                 .execute();
     }

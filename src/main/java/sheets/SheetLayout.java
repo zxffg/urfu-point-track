@@ -9,6 +9,7 @@ public class SheetLayout {
 
     public final static String SUBMISSIONS_APPEND = "A1";   // куда дописывается задача?
     public final static String SUBMISSIONS_READ = "A:F";    // диапазон, из которого сводка считает результат
+    public final static String SUBMISSIONS = "A2:F";        // диапазон, в котором лежат решения
 
     public final static String SUMMARY_SCORES = "A2:B";     // сводка/фамилия и итог
     public final static String SUMMARY_USERS = "D2:E";      // сводка/фамилия и username

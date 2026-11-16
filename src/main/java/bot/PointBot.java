@@ -36,13 +36,13 @@ public class PointBot implements LongPollingSingleThreadUpdateConsumer {
         String username = message.getFrom().getUserName();
         boolean admin = progressService.isAdmin(userId);
 
-        BotCommand command = BotCommand.fromString(message.getText());
+        BotCommand command = BotCommand.fromText(message.getText());
         String answerText;
         if (command == null) {
             answerText = "Неизвестная команда. Используйте /help.";
         } else {
             try {
-                answerText = progressService.handle(userId, username, command.getServiceCommand());
+                answerText = progressService.handle(userId, username, command);
             } catch (Exception e) {
                 answerText = "Ошибка при обращении к таблице данных.";
                 e.printStackTrace();
@@ -59,6 +59,7 @@ public class PointBot implements LongPollingSingleThreadUpdateConsumer {
     private ReplyKeyboardMarkup keyboard(boolean admin) {
         KeyboardRow actions = new KeyboardRow("Мои баллы");
         if (admin) {
+            actions.remove("Мои баллы");
             actions.add("Разбаловка группы");
             actions.add("Пересчитать итоги");
         }
