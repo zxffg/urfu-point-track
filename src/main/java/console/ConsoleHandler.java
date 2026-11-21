@@ -43,6 +43,7 @@ public class ConsoleHandler {
                 case ADD_SUBMISSION -> addSubmission();
                 case SHOW_ALL -> showAll();
                 case REWRITE_SUMMARY -> rewriteSummary();
+                case DELETE_SUBMISSION -> deleteSubmission();
                 case EXIT -> { return; }
                 default -> System.out.println("Неизвестная команда.");
             }
@@ -119,12 +120,64 @@ public class ConsoleHandler {
         // 5. создание Submission
         try {
             Submission submission = service.createSubmission(surnames, exerciseName, deadline, score);
-            System.out.printf("Успешно создана запись: команда - %s | задание - %s | баллы - %.1f%n",
-                    submission.team().surnames(), submission.exercise().name(), submission.score());
+            System.out.println("Успешно создана запись: команда - " + submission.team().surnames()
+                    + " | задание - " + submission.exercise().name()
+                    + " | баллы - " + String.format(Locale.ROOT, "%.1f", submission.score()));
         } catch (IllegalArgumentException e) {
             System.out.println("Ошибка валидации: " + e.getMessage());
         } catch (IOException e) {
             System.out.println("Ошибка сохранения: " + e.getMessage());
+        }
+    }
+
+    // удаление записи: показываем 5 последних, выбираем номер, подтверждаем
+    private void deleteSubmission() {
+        List<Submission> all = service.getAllSubmissions();
+        if (all.isEmpty()) {
+            System.out.println("Нет ни одной записи.");
+            return;
+        }
+
+        List<Submission> page = List.copyOf(all.subList(Math.max(0, all.size() - 5), all.size()));
+        System.out.println("Последние записи:");
+        for (int i = 0; i < page.size(); i++) {
+            Submission sub = page.get(i);
+            System.out.printf("%d) Команда: %s | Задание: %s | Баллы: %.1f%n",
+                    i + 1, sub.team().surnames(), sub.exercise().name(), sub.score());
+        }
+
+        System.out.println("Введите номер записи для удаления (0 - отмена):");
+        int number;
+        try {
+            number = Integer.parseInt(scanner.nextLine().trim());
+        } catch (NumberFormatException e) {
+            System.out.println("Неверный номер.");
+            return;
+        }
+        if (number == 0) {
+            System.out.println("Удаление отменено.");
+            return;
+        }
+        if (number < 1 || number > page.size()) {
+            System.out.println("Неверный номер.");
+            return;
+        }
+
+        Submission selected = page.get(number - 1);
+        System.out.printf("Удалить запись %d: команда - %s | задание - %s | баллы - %.1f? (да/нет)%n",
+                number, selected.team().surnames(), selected.exercise().name(), selected.score());
+
+        String answer = scanner.nextLine().trim().toLowerCase(Locale.ROOT);
+        if (!answer.equals("да")) {
+            System.out.println("Удаление отменено.");
+            return;
+        }
+
+        try {
+            service.deleteSubmission(selected);
+            System.out.println("Запись удалена.");
+        } catch (IllegalArgumentException | IOException e) {
+            System.out.println("Ошибка удаления: " + e.getMessage());
         }
     }
 
