@@ -15,6 +15,7 @@ Java-приложение для ведения академической ус�
 - Валидация ввода (размер команды, баллы, даты)
 - Поиск или создание задания по имени (валидация дублей)
 - Просмотр всех внесённых записей
+- Удаление последних записей через консоль и телеграм бота (с подтверждением)
 - Автоматическая синхронизация с Google Sheets через Service Account
 
 ## Быстрый старт
@@ -29,40 +30,107 @@ mvn clean install
 
 ## Структура проекта
 
-```bash
+### Пакеты
 
-└── main
-├── java
-│   ├── bot
-│   │   ├── BotCommand       // enum для команд бота
-│   │   ├── PointBot         // Бот с опросом сервера и murkup клавиатурами
-│   │   ├── Progress         // Интерфейс с методами (для удобства тестирования)
-│   │   ├── ProgressService  // Логика ответа на команды
-│   │   ├── StudentScore     // обьект с полями (surname, score)
-│   │   └── TelegramAccount  // обьект с полями (surname, username)
-│   ├── console
-│   │   ├── ConsoleHandler   // Полный вывод в консоль тут
-│   │   ├── ChoiceMode       // Вызывается в Main для выбора режима работы
-│   │   ├── ModeOption       // enum для выбора режима работы
-│   │   └── MenuOption       // enum меню режима terminal
-│   ├── sheets
-│   │   ├── ResultExporter   // 
-│   │   ├── SheetLayout      // Единая точка откуда меняем все константы для настройки таблицы
-│   │   ├── ScoreSummary     // Считает баллы по фамилиям
-│   │   ├── SheetsExporter   // Отправляет все в таблицу
-│   │   └── SheetsProgres... // читает таблицу: формирует результаты и аккаунты
-│   ├── > storage
-│   ├── > submission
-│   └── Main                 // точка входа
-└── resources
-    ├── 3-task-structure.png
-    ├── credentials-example.json  // пример api ключей google
-    └── telegram-bot-example.json // пример токена и списка юзеров
+```mermaid
+flowchart TD
+    Main["Main<br/>точка входа и сборка зависимостей"]
+
+    subgraph adapters["Адаптеры"]
+        console["console<br/>терминальное меню"]
+        bot["bot<br/>Telegram-бот"]
+    end
+
+    subgraph scenarios["Сценарии"]
+        submission["submission<br/>SubmissionService"]
+    end
+
+    subgraph infrastructure["Инфраструктура"]
+        sheets["sheets<br/>Google Sheets"]
+    end
+
+    subgraph domain["Модель и память"]
+        storage["storage<br/>Team, Exercise, Storage"]
+    end
+
+    Main --> console
+    Main --> bot
+    Main --> submission
+    Main --> sheets
+    Main --> storage
+
+    console --> submission
+    bot --> submission
+
+    submission --> storage
+    submission -. "ResultExporter" .-> sheets
+
+    sheets --> storage
+    sheets --> submission
+    sheets -. "реализует bot.Progress" .-> bot
+
+    storage -. "хранит Submission" .-> submission
 ```
 
-Тесты (JUnit 5) лежат в src/test/java и покрывают Team, Exercise, Submission, Storage и ConsoleHandler.
+```text
+src/main/java
+├── Main.java                          // точка входа: env, выбор режима, сборка зависимостей
+│
+├── storage/                           // модель предметной области и память
+│   ├── Team.java                      // команда из 1–3 фамилий
+│   ├── Exercise.java                  // задание: название + дедлайн
+│   └── Storage.java                   // List<Submission>, проверка дублей, nextId, getByID, remove
+│
+├── submission/                        // сценарии работы с записями
+│   ├── Submission.java                // record: id, team, exercise, score
+│   └── SubmissionService.java         // createSubmission, deleteSubmission, getAllSubmissions, rewriteSummary
+│
+├── sheets/                            // всё, что знает про Google Sheets
+│   ├── ResultExporter.java            // интерфейс: export / deleteSubmission / rewriteSummary
+│   ├── SheetsExporter.java            // append, deleteDimension, пересчёт Sheet2
+│   ├── SheetsProgressRepository.java  // чтение Sheet1/Sheet2, реализует bot.Progress
+│   ├── SheetLayout.java               // имена листов и диапазоны
+│   ├── ScoreCalculator.java           // сумма баллов по фамилиям
+│   └── StudentScore.java              // record для сводки внутри sheets
+│
+├── bot/                               // Telegram-адаптер
+│   ├── PointBot.java                  // long polling, маршрутизация, клавиатуры
+│   ├── ProgressService.java           // команды, права, состояния добавления/удаления
+│   ├── BotCommand.java                // enum команд и парсинг текста
+│   ├── SubmissionDialog.java          // пошаговое добавление записи
+│   ├── DialogState.java               // состояния добавления
+│   ├── Progress.java                  // интерфейс чтения сводки
+│   ├── StudentScore.java              // record для отчёта бота
+│   └── TelegramAccount.java           // фамилия + username
+│
+└── console/                           // терминальный адаптер
+    ├── ConsoleHandler.java            // меню 1–4: добавить / показать / пересчитать / удалить
+    ├── MenuOption.java                // пункты меню терминала
+    ├── ChoiceMode.java                // выбор режима запуска
+    └── ModeOption.java                // режимы: терминал / бот / гибрид
+```
 
-Подробности по каждому классу в комментариях к коду.
+```text
+src/main/resources
+├── 3-task-structure.png
+├── credentials-example.json         // пример ключей Google
+└── telegram-bot-example.json        // пример токена и списка админов
+```
+
+### Кто за что отвечает
+
+| Пакет | Ответственность | Ключевые классы |
+|---|---|---|
+| `storage` | модель и in-memory хранилище | `Team`, `Exercise`, `Storage` |
+| `submission` | сценарии создания и удаления записей | `Submission`, `SubmissionService` |
+| `sheets` | интеграция с Google Sheets | `ResultExporter`, `SheetsExporter`, `SheetsProgressRepository`, `SheetLayout`, `ScoreCalculator` |
+| `bot` | Telegram UI и состояния диалогов | `PointBot`, `ProgressService`, `BotCommand`, `SubmissionDialog` |
+| `console` | терминальное меню | `ConsoleHandler`, `MenuOption`, `ChoiceMode`, `ModeOption` |
+| `Main` | composition root: собирает всё вместе | `Main` |
+
+Тесты (JUnit 5) лежат в `src/test/java` и покрывают модель, `Storage`, `SubmissionService`, диалоги бота, команды и расчёт итогов.
+
+Подробности по каждому классу - в комментариях к коду.
 
 ## Статус
 
