@@ -31,6 +31,8 @@ public class SheetsProgressRepository implements Progress {
     private final String spreadsheetId;
     private final String sheetName;
 
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
     public SheetsProgressRepository(String credentialsPath, String spreadsheetId, String sheetName)
             throws IOException, GeneralSecurityException {
         this.spreadsheetId = spreadsheetId;
@@ -88,7 +90,6 @@ public class SheetsProgressRepository implements Progress {
 
         // единый submission создаваемый при запуске
         List<Submission> submissions = new ArrayList<>();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         int idCounter = 1;
         for (List<Object> row : rows) {
             // проверка для записей: должна быть минимум одна фамилия и кол-во столбцов =6

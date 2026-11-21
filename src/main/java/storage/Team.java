@@ -7,11 +7,11 @@ import java.util.List;
 public record Team(List<String> surnames) {
     public Team {
         if (surnames == null || surnames.size() < 1 || surnames.size() > 3) {
-            throw new IllegalArgumentException("Team/Недопустимое число участников.");
+            throw new IllegalArgumentException("Недопустимое число участников.");
         }
         for (String name : surnames) {
             if (name == null || name.isBlank()) {
-                throw new IllegalArgumentException("Team/Фамилия не может быть пустой.");
+                throw new IllegalArgumentException("Фамилия не может быть пустой.");
             }
         }
         // защитное копирование

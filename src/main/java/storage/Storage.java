@@ -6,10 +6,6 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/*
- * Класс для хранения объектов типа Submission.
- * По совету одного чувака, решено написать не статический класс, а "обычный объект".
- */
 public class Storage {
     private final List<Submission> submissionsList;
     private final List<Exercise> exercises = new ArrayList<>();
@@ -24,7 +20,7 @@ public class Storage {
     }
 
     // Одна и та же команда не может сдать одно и то же задание второй раз.
-    // Сравнение по множеству фамилий: порядок в команде не важен.
+    // Сравнение по фамилиям: порядок в команде не важен.
     public void add(Submission submission) {
         if (submission == null) {
             throw new IllegalArgumentException("Запись не может быть пустой.");
@@ -53,9 +49,9 @@ public class Storage {
 
     // getByID - поиск по айди
     public Submission getByID(int id) throws NoSuchElementException {
-        for (Submission subM : submissionsList) {
-            if (subM.id() == id) {
-                return subM;
+        for (Submission submission : submissionsList) {
+            if (submission.id() == id) {
+                return submission;
             }
         }
         throw new NoSuchElementException("Submission с id=" + id + " не найдена.");
