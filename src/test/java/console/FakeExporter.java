@@ -1,16 +1,17 @@
-// ненастоящий класс для 4го теста.
+// ненастоящий класс для тестов.
 
 package console;
 
 import sheets.ResultExporter;
 import submission.Submission;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-class FakeExporter implements ResultExporter {
+public class FakeExporter implements ResultExporter {
     private final List<Submission> exported = new ArrayList<>();
+    private final List<Submission> deleted = new ArrayList<>();
+    private int rewriteSummaryCalls;
 
     @Override
     public void export(Submission submission) {
@@ -18,11 +19,24 @@ class FakeExporter implements ResultExporter {
     }
 
     @Override
-    public void rewriteSummary() throws IOException {
-
+    public void deleteSubmission(Submission submission) {
+        deleted.add(submission);
     }
 
-    List<Submission> getExported() {
+    @Override
+    public void rewriteSummary() {
+        rewriteSummaryCalls++;
+    }
+
+    public List<Submission> getExported() {
         return exported;
+    }
+
+    public List<Submission> getDeleted() {
+        return deleted;
+    }
+
+    public int getRewriteSummaryCalls() {
+        return rewriteSummaryCalls;
     }
 }

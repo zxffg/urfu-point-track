@@ -23,6 +23,15 @@ public class BotCommandTest {
         assertEquals(BotCommand.RECALCULATE, BotCommand.fromText("пересчитать итоги"));
         assertEquals(BotCommand.RECALCULATE, BotCommand.fromText("/recalculate"));
 
+        assertEquals(BotCommand.ADD_SUBMISSION, BotCommand.fromText("добавить запись сдачи"));
+        assertEquals(BotCommand.ADD_SUBMISSION, BotCommand.fromText("/add_submission"));
+
+        assertEquals(BotCommand.DELETE_SUBMISSION, BotCommand.fromText("удалить запись"));
+        assertEquals(BotCommand.DELETE_SUBMISSION, BotCommand.fromText("/delete_submission"));
+
+        assertEquals(BotCommand.CANCEL, BotCommand.fromText("отмена"));
+        assertEquals(BotCommand.CANCEL, BotCommand.fromText("/cancel"));
+
         assertEquals(BotCommand.UNKNOWN, BotCommand.fromText(""));
     }
 }
