@@ -12,7 +12,7 @@ public class TeamTest {
     @Test
     void createsWithValidSurnames() {
         Team team = new Team(List.of("Должник", "Двоешник"));
-        assertEquals(2, team.getSurnames().size());
+        assertEquals(2, team.surnames().size());
     }
 
     // 2. Инициализация пустым списком
@@ -43,11 +43,11 @@ public class TeamTest {
     @Test
     void createsWithOne() {
         Team team = new Team(List.of("Хвостовка"));
-        assertEquals(1, team.getSurnames().size());
+        assertEquals(1, team.surnames().size());
     }
     @Test
     void createsWithThree() {
         Team team = new Team(List.of("Пересдача", "Долги", "Досдать"));
-        assertEquals(3, team.getSurnames().size());
+        assertEquals(3, team.surnames().size());
     }
 }

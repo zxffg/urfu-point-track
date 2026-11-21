@@ -4,8 +4,10 @@ import org.junit.jupiter.api.Test;
 import submission.Submission;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,6 +24,17 @@ public class StorageTest {
     void addIntoStorage() {
         storage.add(submission);
         assertTrue(storage.getAll().contains(submission));
+    }
+
+    // Та же команда и то же задание, даже в другом порядке фамилий, второй раз не пишутся.
+    @Test
+    void rejectsDuplicateTeamAndExercise() {
+        storage.add(submission);
+        Team reversed = new Team(List.of("Перервенко", "Кабаев"));
+        Exercise sameTask = new Exercise("КАК ОТЧИСЛИТЬ СТУДЕНТА", LocalDate.of(2026, 10, 1));
+        Submission duplicate = new Submission(9, reversed, sameTask, 1.0);
+        assertThrows(IllegalArgumentException.class, () -> storage.add(duplicate));
+        assertEquals(1, storage.getAll().size());
     }
 
     // 2. Попробовать изменить получаемую коллекцию
@@ -48,43 +61,36 @@ public class StorageTest {
         });
     }
 
-    // Ниже проверка функции findOrCreateEx()
-    private String name = "Как отчислить студента";
-    private LocalDate deadline = LocalDate.of(2026, 9, 24);
-
-    // 5. Задания с таким именем нет -> создается новое -> возвращается
-    @Test
-    void newExercise() {
-        Exercise result = storage.findOrCreateEx(name, deadline);
-        assertEquals(name, result.getName());
-        assertEquals(deadline, result.getDeadline());
-    }
-
-    // 6. Регистронезависимость (есть проверка с equalsIgnoreCase())
+    // 5. Регистронезависимость (есть проверка с equalsIgnoreCase())
     @Test
     void alreadyExist() {
-        String nameTwo = "КАК ОТЧИСЛИТЬ СТУДЕНТА";
-        Exercise first = storage.findOrCreateEx(name, deadline);
-        Exercise second = storage.findOrCreateEx(nameTwo, deadline);
-        // Сравнивает идентичность двух чуваков
-        assertSame(first, second);
+        storage.add(submission);
+        Optional<Exercise> found = storage.findExercise("КАК ОТЧИСЛИТЬ СТУДЕНТА");
+        assertTrue(found.isPresent());
+        assertSame(exercise, found.get());
     }
 
-    // 7. пустое поле с дедлайном
     @Test
-    void nullDeadline() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            LocalDate date = null;
-            storage.findOrCreateEx(name, date);
-        });
+    void findExerciseReturnsEmptyWhenNotFound() {
+        Optional<Exercise> found = storage.findExercise("Несуществующая задача");
+        assertTrue(found.isEmpty());
     }
 
-    // 8. Пустое поле с именем
+    // 6. init следующий id
     @Test
-    void nullName() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            String nameTmp = null;
-            storage.findOrCreateEx(nameTmp, deadline);
-        });
+    void maxIdInInit() {
+        List<Submission> initialData = List.of(new Submission(1, team, exercise, 2.0), new Submission(2, team, exercise, 1.0));
+        storage.init(initialData);
+
+        assertEquals(initialData.size() + 1, storage.nextId());
+    }
+
+    // 6. init нулевой id
+    @Test
+    void zeroIdInit() {
+        List<Submission> initialData = new ArrayList<>();
+        storage.init(initialData);
+
+        assertEquals(initialData.size() + 1, storage.nextId());
     }
 }

@@ -6,13 +6,12 @@ import storage.*;
 import submission.Submission;
 import submission.SubmissionService;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 
 // Класс ConsoleHandler принимает ввод пользователя и создает запись
 // в таблице.
@@ -43,34 +42,45 @@ public class ConsoleHandler {
             switch (selected.get()) {
                 case ADD_SUBMISSION -> addSubmission();
                 case SHOW_ALL -> showAll();
+                case REWRITE_SUMMARY -> rewriteSummary();
                 case EXIT -> { return; }
                 default -> System.out.println("Неизвестная команда.");
             }
         }
     }
 
-    // Меню
+    // меню
     private void printMenu() {
         for (MenuOption option : MenuOption.values()) {
             System.out.println(option.getCode() + " - " + option.getLabel());
+        }
+        System.out.print("Введите команду: ");
+    }
+
+    // пересчет итогов
+    private void rewriteSummary() {
+        try {
+            service.rewriteSummary();
+            System.out.println("Итоги пересчитаны.");
+        } catch (IOException e) {
+            System.out.println("Не удалось пересчитать итоги: " + e.getMessage());
         }
     }
 
     // Получение данных для метода createSubmission()
     private void addSubmission() {
-        System.out.println("Введите фамилии (до 3, для завершения ввода раньше — /q):");
-
-        // Получение фамилий для команды
-        List<String> surnames = new ArrayList<>();
-        while (surnames.size() < 3) {
-            String input = scanner.nextLine();
-            if (input.equals("/q")) {
-                break; // пользователь решил закончить раньше
-            }
-            surnames.add(input);
+        // 1. фамилии
+        System.out.println("Введите фамилии (от 1 до 3):");
+        String rawSurnames = scanner.nextLine().trim();
+        List<String> surnames = Arrays.stream(rawSurnames.split("[,\\s]+"))
+                .filter(s -> !s.isBlank())
+                .toList();
+        if (surnames.isEmpty() || surnames.size() > 3) {
+            System.out.println("В команде должно быть от 1 до 3 человек.");
+            return;
         }
 
-        // Название задачи
+        // 2. название задачи
         System.out.println("Введите название задачи:");
         String exerciseName = scanner.nextLine();
         if (exerciseName.isBlank()) {
@@ -78,37 +88,43 @@ public class ConsoleHandler {
             return;
         }
 
-        // Дедлайн задачи
+        // 3. дедлайн задачи
         System.out.println("Введите дедлайн задачи в формате 'DD-MM-YYYY':");
-        LocalDate deadline = null;
+        LocalDate deadline;
         try {
-            deadline = LocalDate.parse(scanner.nextLine(), DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            DateTimeFormatter formatter = DateTimeFormatter // форматирование дат
+                    .ofPattern("dd-MM-uuuu")
+                    .withResolverStyle(ResolverStyle.STRICT);
+            deadline = LocalDate.parse(scanner.nextLine().trim(), formatter);
         } catch (DateTimeParseException e) {
-            System.out.println("Ошибка парсинга deadline: " + e.getMessage());
+            System.out.println("Неверный формат. Ожжидается 'DD-MM-YYYY'.");
             return;
         }
 
-        // Получение результата
-        System.out.println("Укажите количество баллов за задачу:");
+        // 4. оценка
+        System.out.println("Укажите количество баллов за задачу (от 0 до 2):");
         double score;
         try {
-            score = Double.parseDouble(scanner.nextLine());
-            // Тут макс. число баллов было просто хардкодом, для простоты сделана константа.
+            String inputScore = scanner.nextLine().trim().replace(",", ".");
+            score = Double.parseDouble(inputScore);
             if (score < 0 || score > MAX_SCORE) {
-                System.out.println("Минимальное число баллов 0, а максимальное 2.");
+                System.out.println("Балл должен быть от 0 до 2.");
                 return;
             }
         } catch (NumberFormatException e) {
-            System.out.println("Ошибка парсинга double: " + e.getMessage());
+            System.out.println("Некорректный формат балла.");
             return;
         }
 
-        // Создание Submission + добавление в Storage и SheetsAPI
+        // 5. создание Submission
         try {
-            Submission returnedSubmission = service.createSubmission(surnames, exerciseName, deadline, score);
-            System.out.println("Добавлена запись: " + returnedSubmission);
+            Submission submission = service.createSubmission(surnames, exerciseName, deadline, score);
+            System.out.printf("Успешно создана запись: команда - %s | задание - %s | баллы - %.1f%n",
+                    submission.team().surnames(), submission.exercise().name(), submission.score());
         } catch (IllegalArgumentException e) {
-            System.out.println("Ошибка создания записи: " + e.getMessage());
+            System.out.println("Ошибка валидации: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Ошибка сохранения: " + e.getMessage());
         }
     }
 
@@ -119,9 +135,8 @@ public class ConsoleHandler {
         }
 
         for (Submission sub : submissions) {
-            // красивый и понятный вывод
-            List<String> teamName = sub.team().getSurnames();
-            String exerciseName = sub.exercise().getName();
+            List<String> teamName = sub.team().surnames();
+            String exerciseName = sub.exercise().name();
 
             System.out.printf("ID: %d | Команда: %s | Задание: %s | Баллы: %.1f%n",
                     sub.id(), teamName, exerciseName, sub.score());

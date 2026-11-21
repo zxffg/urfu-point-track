@@ -9,8 +9,8 @@ public record Submission(int id, Team team, Exercise exercise, double score) {
     private static int nextId = 1;
 
     public Submission {
-        if (score < 0) {
-            throw new IllegalArgumentException("Балл не может быть ниже нуля.");
+        if (!Double.isFinite(score) || score < 0 || score > 2) {
+            throw new IllegalArgumentException("Балл должен быть числом от 0 до 2.");
         }
     }
 
