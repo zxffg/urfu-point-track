@@ -5,7 +5,13 @@ package sheets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.sheets.v4.Sheets;
+import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
 import com.google.api.services.sheets.v4.model.ClearValuesRequest;
+import com.google.api.services.sheets.v4.model.DeleteDimensionRequest;
+import com.google.api.services.sheets.v4.model.DimensionRange;
+import com.google.api.services.sheets.v4.model.Request;
+import com.google.api.services.sheets.v4.model.Sheet;
+import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -17,12 +23,16 @@ import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public class SheetsExporter implements ResultExporter {
     private final Sheets service;
     private final String spreadsheetId;
     private final SheetsProgressRepository repository;
+    private int cachedSheetId = -1;
 
     public SheetsExporter(String credentialsPath, String spreadsheetId) throws IOException, GeneralSecurityException {
         this.spreadsheetId = spreadsheetId;
@@ -95,10 +105,36 @@ public class SheetsExporter implements ResultExporter {
         }
     }
 
+    // удаляет строку из журнала сдач. Итоги пересчитывает SubmissionService.
+    @Override
+    public void deleteSubmission(Submission submission) throws IOException {
+        List<List<Object>> rows = read(
+                SheetLayout.range(SheetLayout.SUBMISSION_SHEET, SheetLayout.SUBMISSIONS_READ));
+        int row = findRow(rows, submission);
+        if (row < 0) {
+            throw new IOException("Запись не найдена в Sheet1. Обновите список и повторите.");
+        }
+
+        DeleteDimensionRequest delete = new DeleteDimensionRequest()
+                .setRange(new DimensionRange()
+                        .setSheetId(submissionSheetId())
+                        .setDimension("ROWS")
+                        .setStartIndex(row)
+                        .setEndIndex(row + 1));
+
+        try {
+            service.spreadsheets().batchUpdate(spreadsheetId,
+                            new BatchUpdateSpreadsheetRequest()
+                                    .setRequests(List.of(new Request().setDeleteDimension(delete))))
+                    .execute();
+        } catch (IOException e) {
+            throw new IOException("Не удалось удалить запись из Sheet1. Проверьте таблицу.", e);
+        }
+    }
+
     @Override
     public void rewriteSummary() throws IOException {
         String rosterRange = SheetLayout.range(SheetLayout.SUMMARY_SHEET, SheetLayout.SUMMARY_ROSTER);
-        String submissionsRange = SheetLayout.range(SheetLayout.SUBMISSION_SHEET, SheetLayout.SUBMISSIONS_READ);
 
         List<List<Object>> rosterRows = read(rosterRange);
         List<String> students = rosterRows.stream()
@@ -131,5 +167,57 @@ public class SheetsExporter implements ResultExporter {
     private List<List<Object>> read(String range) throws IOException {
         List<List<Object>> values = service.spreadsheets().values().get(spreadsheetId, range).execute().getValues();
         return values == null ? List.of() : values;
+    }
+
+    // ищем снизу: последние записи лежат в конце листа, заголовок пропускаем
+    private int findRow(List<List<Object>> rows, Submission target) {
+        Set<String> team = surnames(target.team().surnames());
+        for (int i = rows.size() - 1; i >= 1; i--) {
+            List<Object> row = rows.get(i);
+            if (row.size() < 6) {
+                continue;
+            }
+            if (cell(row, 3).equalsIgnoreCase(target.exercise().name())
+                    && surnames(row).equals(team)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private Set<String> surnames(List<?> values) {
+        Set<String> result = new HashSet<>();
+        for (int i = 0; i < Math.min(SheetLayout.TEAM_SIZE, values.size()); i++) {
+            Object value = values.get(i);
+            if (value == null) {
+                continue;
+            }
+            String surname = value.toString().strip();
+            if (!surname.isBlank()) {
+                result.add(surname.toLowerCase(Locale.ROOT));
+            }
+        }
+        return result;
+    }
+
+    private String cell(List<?> row, int index) {
+        if (index >= row.size() || row.get(index) == null) {
+            return "";
+        }
+        return row.get(index).toString().strip();
+    }
+
+    private int submissionSheetId() throws IOException {
+        if (cachedSheetId >= 0) {
+            return cachedSheetId;
+        }
+        Spreadsheet spreadsheet = service.spreadsheets().get(spreadsheetId).execute();
+        for (Sheet sheet : spreadsheet.getSheets()) {
+            if (SheetLayout.SUBMISSION_SHEET.equals(sheet.getProperties().getTitle())) {
+                cachedSheetId = sheet.getProperties().getSheetId();
+                return cachedSheetId;
+            }
+        }
+        throw new IOException("Лист " + SheetLayout.SUBMISSION_SHEET + " не найден.");
     }
 }

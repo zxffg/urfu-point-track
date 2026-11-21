@@ -9,4 +9,5 @@ import java.io.IOException;
 public interface ResultExporter {
     void export(Submission submission) throws IOException;
     void rewriteSummary() throws IOException;
+    void deleteSubmission(Submission submission) throws IOException;
 }

@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 public class Storage {
     private final List<Submission> submissionsList;
-    private final List<Exercise> exercises = new ArrayList<>();
     private int lastId = 0;
 
     public int nextId() {
@@ -31,6 +30,13 @@ public class Storage {
             }
         }
         submissionsList.add(submission);
+    }
+
+    // удаление записи из памяти. lastId не откатываем, id не переиспользуются.
+    public void remove(Submission submission) {
+        if (submission == null || !submissionsList.remove(submission)) {
+            throw new IllegalArgumentException("Запись не найдена.");
+        }
     }
 
     private boolean sameWork(Submission left, Submission right) {

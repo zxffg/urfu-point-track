@@ -29,7 +29,7 @@ public class SubmissionService {
         Exercise exercise = storage.findExercise(exerciseName)
                 .orElseGet(() -> new Exercise(exerciseName, deadline));
 
-        Submission submission = Submission.create(team, exercise, score);
+        Submission submission = new Submission(storage.nextId(), team, exercise, score);
 
         exporter.export(submission);
         storage.add(submission);
@@ -40,6 +40,19 @@ public class SubmissionService {
     // Использует getAll() из Storage.java
     public List<Submission> getAllSubmissions() {
         return storage.getAll();
+    }
+
+    // удаление: сначала таблица, потом Storage, потом итоги
+    public void deleteSubmission(Submission submission) throws IOException {
+        exporter.deleteSubmission(submission);
+        storage.remove(submission);
+
+        try {
+            exporter.rewriteSummary();
+        } catch (IOException e) {
+            throw new IOException(
+                    "Запись удалена, но итоги не обновлены. Нажмите «Пересчитать итоги».", e);
+        }
     }
 
     // перерасчет итогов
