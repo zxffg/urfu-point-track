@@ -36,10 +36,16 @@ public class PointBot implements LongPollingSingleThreadUpdateConsumer {
         String username = message.getFrom().getUserName();
         boolean admin = progressService.isAdmin(userId);
 
-        BotCommand command = BotCommand.fromText(message.getText());
         String answerText;
-        if (command == null) {
-            answerText = "Неизвестная команда. Используйте /help.";
+        BotCommand command = BotCommand.fromText(message.getText());
+        // проверяем нет ли активных диалогов
+        // если есть, то текст передаем в состояния
+        if (progressService.isActiveState(userId)) {
+            try {
+                answerText = progressService.handleDialog(userId, message.getText());
+            } catch (Exception e) {
+                answerText = "Ошибка состояния.";
+            }
         } else {
             try {
                 answerText = progressService.handle(userId, username, command);
@@ -50,23 +56,32 @@ public class PointBot implements LongPollingSingleThreadUpdateConsumer {
         }
 
         try {
-            send(chatId, answerText, keyboard(admin));
+            send(chatId, answerText, keyboard(admin, progressService.isActiveState(userId)));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private ReplyKeyboardMarkup keyboard(boolean admin) {
-        KeyboardRow actions = new KeyboardRow("Мои баллы");
-        if (admin) {
-            actions.remove("Мои баллы");
-            actions.add("Разбаловка группы");
-            actions.add("Пересчитать итоги");
+    // реплай клавиатуры
+    private ReplyKeyboardMarkup keyboard(boolean admin, boolean dialogActive) {
+        var builder = ReplyKeyboardMarkup.builder().resizeKeyboard(true);
+        if (dialogActive) {
+            return builder
+                    .keyboardRow(new KeyboardRow("Отмена"))
+                    .build();
         }
-        return ReplyKeyboardMarkup.builder()
-                .keyboardRow(actions)
+
+        if (admin) {
+            return builder
+                    .keyboardRow(new KeyboardRow("Добавить запись сдачи"))
+                    .keyboardRow(new KeyboardRow("Удалить запись"))
+                    .keyboardRow(new KeyboardRow("Разбаловка группы", "Пересчитать итоги"))
+                    .keyboardRow(new KeyboardRow("/help"))
+                    .build();
+        }
+        return builder
+                .keyboardRow(new KeyboardRow("Мои баллы"))
                 .keyboardRow(new KeyboardRow("/help"))
-                .resizeKeyboard(true)
                 .build();
     }
 

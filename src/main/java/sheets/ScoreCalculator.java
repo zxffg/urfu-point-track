@@ -10,7 +10,6 @@ import java.util.Map;
 
 // Считает итоговые баллы по фамилиям. Таблица хранит результат, формулы в ней не нужны.
 public final class ScoreCalculator {
-    private final static int SCORE_COLUMN = SheetLayout.SCORE_COLUMN;
 
     private ScoreCalculator() {}
 

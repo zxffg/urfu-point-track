@@ -7,6 +7,7 @@ public enum MenuOption {
     ADD_SUBMISSION("1", "Добавить решение."),
     SHOW_ALL("2", "Показать все решения."),
     REWRITE_SUMMARY("3", "Пересчитать итоги."),
+    DELETE_SUBMISSION("4", "Удалить решение."),
     EXIT("0", "Выйти.");
 
     private final String code;

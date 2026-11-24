@@ -18,7 +18,7 @@ public class SheetLayout {
     public final static String SUMMARY_WRITE = "A1";        // сводка/куда писать новую сводку
 
     public final static int TEAM_SIZE = 3;     // для цикла фамилий в SheetsExporter и ScoreSummary
-    public final static int SCORE_COLUMN = 5;  // номер колонки с баллами
+    public final static int SCORE_COLUMN = 5;  // номер колонки с баллами из первой таблицы
     
     private SheetLayout() {};
 

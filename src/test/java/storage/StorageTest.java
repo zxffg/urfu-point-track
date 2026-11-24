@@ -93,4 +93,18 @@ public class StorageTest {
 
         assertEquals(initialData.size() + 1, storage.nextId());
     }
+
+    // 7. удаление существующей записи
+    @Test
+    void removeExisting() {
+        storage.add(submission);
+        storage.remove(submission);
+        assertTrue(storage.getAll().isEmpty());
+    }
+
+    // 8. удаление несуществующей записи
+    @Test
+    void removeMissingThrows() {
+        assertThrows(IllegalArgumentException.class, () -> storage.remove(submission));
+    }
 }
