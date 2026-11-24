@@ -99,7 +99,7 @@ public class SubmissionDialog {
                 + "Задание: " + exerciseName + "\n"
                 + "Дедлайн: " + deadline.format(DEADLINE_FORMAT) + "\n"
                 + "Баллы: " + String.format(Locale.ROOT, "%.1f", score) + "\n"
-                + "Подтвердить? Напишите 'да' или 'нет'.";
+                + "Подтвердить? Напишите «да» или «нет».";
     }
 
     private String handleApproving(String input) {
@@ -111,7 +111,7 @@ public class SubmissionDialog {
             finished = true;
             return "Добавление отменено.";
         }
-        return "Напишите 'да' или 'нет'.";
+        return "Напишите «да» или «нет».";
     }
 
     private String create() {
